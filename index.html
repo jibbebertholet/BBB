@@ -519,7 +519,8 @@ function defaultGame(){
     zooNiveau: 1, bezoekers: 0,
     events: {}, eventDieren: [],
     activeZone: "home",
-    totaalEierenUit: 0
+    totaalEierenUit: 0,
+    zooNachtForce: null      // null=auto (volgt de klok), true=nacht, false=dag
   };
 }
 
@@ -609,6 +610,11 @@ function sessLoad(s){
 const TYPE_LABEL = { gym:"Gym", hardlopen:"Hardlopen", hiit:"HIIT", padel:"Padel" };
 const TYPE_ICON  = { gym:"🏋️‍♀️", hardlopen:"🏃‍♀️", hiit:"🔥", padel:"🎾" };
 const TYPE_GRAD  = { gym:["#ff4d97","#e0218a"], hardlopen:["#c084fc","#ff5fae"], hiit:["#ff8a4d","#ff2d78"], padel:["#3ad9b3","#27a3dd"] };
+/* sportmaatjes: elk dier hoort random bij 1 van 3 groepen; blijheid zakt per dag en gaat omhoog bij een matchende training */
+const SPORT_GROUPS = ["hardlopen","gym","hiit"];
+const SPORT_LABEL  = { hardlopen:"Hardloop-maatje", gym:"Gym-maatje", hiit:"HIIT-maatje" };
+const HAPPY_DECAY_TIERS = [ {min:60, rate:15}, {min:35, rate:10}, {min:0, rate:5} ]; // blijheid ≥60 → −15/dag · 35–59 → −10 · <35 → −5
+const SPORT_BOOST  = { hardlopen:75, gym:75, hiit:100, padel:30 }; // padel heeft geen eigen groep → klein boost voor iedereen
 const TYPE_MS    = { gym:"p", hardlopen:"l", hiit:"a", padel:"t" };
 
 /* ============================================================
@@ -1575,6 +1581,7 @@ function commitSession(sess, existingId, slotId){
   // slot afvinken
   if(slotId){ const slot=S.week.slots.find(x=>x.id===slotId); if(slot){ slot.status="done"; slot.sessionId=sess.id; } }
   onSessionLogged(sess); checkWeekGoalCelebration();
+  fireSessionLoggedNotification(sess);
 }
 function checkWeekGoalCelebration(){
   if(weekDoneCount()===weekTargetCount()){
@@ -1689,7 +1696,6 @@ function renderProteinModal(){
     <div class="frow c1" style="margin-top:10px"><div class="field"><label>Notitie (optioneel)</label><textarea id="pr_note" placeholder="Een gevoel, honger, een lekkere maaltijd…" onchange="saveProteinNote()">${esc(pr.notitie)}</textarea></div></div>
     <div class="factions" style="margin-top:4px">
       <button class="btn" onclick="closeModal()">Klaar</button>
-      ${!hit&&tgt?`<button class="btn ghost" onclick="quickProteinHit()">✓ Doel handmatig afvinken</button>`:""}
     </div>`, true);
 }
 function addMeal(){
@@ -1713,11 +1719,6 @@ function removeMeal(id){
   save(); refreshChrome(); renderProteinModal();
 }
 function saveProteinNote(){ const d=todayISO(); if(S.protein[d]&&el("pr_note")) S.protein[d].notitie=el("pr_note").value.trim(); save(); }
-function quickProteinHit(){
-  const d=todayISO(), pr=ensureProteinDay(d); pr.gehaald=true;
-  if(typeof gameAfterProtein==="function") gameAfterProtein(pr);
-  save(); refreshChrome(); celebrate("Eiwitdoel afgevinkt! 🥩",70); closeModal();
-}
 function openCycleLogger(){
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
     <h2>🌸 Cyclus loggen</h2><div class="msub">Leg de startdatum van je menstruatie vast. De engine past je advies hierop zacht aan. Alles blijft lokaal.</div>
@@ -2295,7 +2296,7 @@ function addAnimal(soort, opts){
   opts=opts||{};
   const sp=ANIMALS[soort]; if(!sp) return null;
   const inst={ id:uid("a_"), soort, naam: opts.naam||sp.naam, groei: opts.groei!=null?opts.groei:(owns(soort)?1:0.4),
-    blijheid:100, voer:0, zone: opts.zone || (ANIMALS[soort].prefZone && (S.game.zones||[]).includes(ANIMALS[soort].prefZone) ? ANIMALS[soort].prefZone : (S.game.activeZone||"home")), x: opts.x!=null?opts.x:(15+Math.random()*70), y:0, skin:"normaal", verkregen:todayISO() };
+    blijheid:100, voer:0, sport: opts.sport || SPORT_GROUPS[Math.floor(Math.random()*SPORT_GROUPS.length)], zone: opts.zone || (ANIMALS[soort].prefZone && (S.game.zones||[]).includes(ANIMALS[soort].prefZone) ? ANIMALS[soort].prefZone : (S.game.activeZone||"home")), x: opts.x!=null?opts.x:(15+Math.random()*70), y:0, skin:"normaal", verkregen:todayISO() };
   S.game.dieren.push(inst);
   if(!discovered(soort)){ S.game.album.push(soort); if(sp.rarity==="legendarisch") grantBadge("eerste_legendarisch"); }
   if(S.game.dieren.length>=5) grantBadge("vijf_dieren");
@@ -2402,6 +2403,34 @@ function creatureMiniIcon(cfg){
 /* ============================================================
    SPEL — economie: bonussen, eieren, quests, mijlpalen
    ============================================================ */
+/* ---- blijheid: groepsindeling, dagelijks verval, training-boost ---- */
+function ensureAnimalSports(){
+  (S.game.dieren||[]).forEach(d=>{ if(!d.sport) d.sport=SPORT_GROUPS[Math.floor(Math.random()*SPORT_GROUPS.length)]; });
+}
+function dailyDecayRate(h){ for(const t of HAPPY_DECAY_TIERS){ if(h>=t.min) return t.rate; } return 5; }
+function applyHappinessDecay(){
+  const g=S.game, today=todayISO();
+  if(!g.blijVervalDatum){ g.blijVervalDatum=today; return; }   // eerste keer: alleen ijken
+  let gap=daysBetween(g.blijVervalDatum, today);
+  if(gap<=0) return;
+  gap=Math.min(gap, 60);                                        // veiligheidscap bij lange afwezigheid
+  (g.dieren||[]).forEach(d=>{
+    let h=(d.blijheid==null?100:d.blijheid);
+    for(let i=0;i<gap && h>0;i++){ h=Math.max(0, h - dailyDecayRate(h)); }   // per dag; tarief volgt het niveau (hoger = sneller)
+    d.blijheid=h;
+  });
+  g.blijVervalDatum=today;
+}
+function boostAnimalsForSession(s){
+  const g=S.game; let n=0;
+  if(s.type==="padel"){                                         // geen eigen groep → iedereen een beetje
+    (g.dieren||[]).forEach(d=>{ d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+SPORT_BOOST.padel); n++; });
+    return {n, all:true};
+  }
+  const boost=SPORT_BOOST[s.type]; if(!boost) return {n:0, all:false};
+  (g.dieren||[]).forEach(d=>{ if((d.sport||"")===s.type){ d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+boost); n++; } });
+  return {n, all:false};
+}
 function gameAfterSession(s, ctx){
   ctx=ctx||{}; const prs=ctx.prs||[], base=ctx.base!=null?ctx.base:sessPootjesBase(s);
   const g=S.game; let bonus=0, messages=[];
@@ -2431,6 +2460,13 @@ function gameAfterSession(s, ctx){
   // ei elke 5 sessies
   g.sessiesSindsEi=(g.sessiesSindsEi||0)+1;
   if(g.sessiesSindsEi>=SESSIONS_PER_EGG){ g.sessiesSindsEi=0; g.eieren=(g.eieren||0)+1; messages.push({icon:"🥚",text:"Mystery-ei verdiend! Broed 'm uit in de Zoo 🥚"}); }
+  // sportmaatjes worden blijer van een matchende training (blijheid zakt anders 25/dag)
+  const boostRes = boostAnimalsForSession(s);
+  if(boostRes.n>0){
+    messages.push({ icon: TYPE_ICON[s.type]||"🐾", text: boostRes.all
+      ? `Alle dieren werden wat blijer van je ${TYPE_LABEL[s.type]||"sessie"}! 🐾`
+      : `${boostRes.n} ${plural(boostRes.n,"sportmaatje","sportmaatjes")} (${TYPE_LABEL[s.type]}) ${boostRes.n===1?"werd":"werden"} blijer! 🐾` });
+  }
   // quests
   questProgressForSession(s, {prs});
   return {bonus, messages};
@@ -2658,6 +2694,28 @@ function recentRecovery(){
 }
 function dotColor(v,lowGood){ if(v==null) return "var(--mut)"; if(lowGood) return v<=4?"var(--mint)":v<=6.5?"var(--amber)":"var(--red)"; return v>=7?"var(--mint)":v>=6?"var(--amber)":"var(--red)"; }
 
+function proteinCard(){
+  const d=todayISO();
+  const tgt=proteinTarget(), tot=proteinDayTotal(d), hit=proteinDayHit(d);
+  const pct = tgt? clamp(tot/tgt*100,0,100) : (hit?100:0);
+  const rest = tgt? Math.max(0, tgt-tot) : null;
+  const weekHits = Object.keys(S.protein).filter(x=>x>=thisMonday() && proteinDayHit(x)).length;
+  return `<div class="card">
+    <div class="charttitle"><h3><span class="ic">🥩</span>Eiwit vandaag</h3>${hit?'<span class="chip mint">gehaald 🎉</span>':(tgt?`<span class="chip pink">${Math.round(pct)}%</span>`:"")}</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:4px;align-self:stretch;min-height:72px;border-radius:3px;background:linear-gradient(180deg,#ff85b8,#ff4d97)"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:19px;font-weight:800">${tot} g${tgt?` <span style="font-size:13px;color:var(--dim);font-weight:600">van ${tgt} g</span>`:""}</div>
+        <div class="cardsub" style="margin:3px 0 0">${hit?"Top! Je eiwitdoel is binnen 💪":(tgt?`Nog <b>${rest} g</b> te gaan vandaag`:"Stel je gewicht in voor een eiwitdoel")}</div>
+        <div class="cardsub" style="margin-top:5px">Deze week: <b>${weekHits}</b>/7 ${plural(weekHits,"dag","dagen")} gehaald</div>
+      </div>
+      <div class="ringwrap">${ring(pct,88,{big:tot+"g", sub:tgt?("van "+tgt):"", c0:"#ff85b8", c1:hit?"#3ad9b3":"#e0218a", sw:9})}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:13px">
+      <button class="btn" onclick="openProteinLogger()">🥩 ${tot>0?"Bijwerken":"Log eiwit"}</button>
+    </div>
+  </div>`;
+}
 function renderVandaag(){
   const p=S.profile, g=S.game, wk=ensureWeek();
   const done=weekDoneCount(), pct=Math.round(clamp(done/5,0,1)*100);
@@ -2701,7 +2759,6 @@ function renderVandaag(){
             <div class="cardsub">Wil je extra? Voeg een sessie toe in de Week-tab. Of geniet van je rust 🌿</div></div>`}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
           <button class="btn sm ghost" onclick="openWeightLogger()">⚖️ Weeg</button>
-          <button class="btn sm ghost" onclick="openProteinLogger()">🥩 Eiwit</button>
           <button class="btn sm ghost" onclick="go('week')">🗓️ Hele week</button>
         </div>
       </div>
@@ -2716,6 +2773,8 @@ function renderVandaag(){
         </div>
       </div>
     </div>
+
+    ${proteinCard()}
 
     <div class="row r-2">
       <div class="card" onclick="go('zoo')" style="cursor:pointer">
@@ -3108,7 +3167,12 @@ function proteinSection(){
    ZOO — render & interactie
    ============================================================ */
 let ZOO_EDIT=false;
-function nightState(){ const h=new Date().getHours(); return { night: h<7||h>=20, dusk:(h>=18&&h<20)||(h>=6&&h<8) }; }
+function nightState(){
+  const f = S.game ? S.game.zooNachtForce : null;
+  if(f===true) return { night:true, dusk:false };     // handmatig op nacht
+  if(f===false) return { night:false, dusk:false };    // handmatig op dag
+  const h=new Date().getHours(); return { night: h<7||h>=20, dusk:(h>=18&&h<20)||(h>=6&&h<8) };
+}
 function monthSeason(){ const m=new Date().getMonth(); if(m===11) return "kerst"; if(m>=5&&m<=7) return "zomer"; return null; }
 
 /* ---- verblijf-decor (bomen, poeltje, gras) voor diepte ---- */
@@ -3398,7 +3462,7 @@ function renderZoo(){
       ${decoHtml}
       ${critterHtml}
       <div class="zoo-hud">
-        <div class="hud-pill">${ns.night?"🌙 Nacht":ns.dusk?"🌆 Schemer":"☀️ Dag"}</div>
+        <div class="hud-pill" onclick="toggleZooNight()" style="cursor:pointer" title="Tik om te wisselen: dag · nacht · automatisch">${ns.night?"🌙 Nacht":ns.dusk?"🌆 Schemer":"☀️ Dag"}${g.zooNachtForce!=null?" 📌":""}</div>
         <div class="hud-pill" onclick="openEggModal()" style="cursor:pointer">🥚 ${g.eieren||0}</div>
       </div>
       ${critterHtml.trim()===""?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);font-weight:600;text-align:center;padding:20px">Dit verblijf is nog leeg.<br>Koop een dier of broed een ei uit! 🐣</div>`:""}
@@ -3436,6 +3500,13 @@ function nextUnlockHint(){
 }
 function setZone(z){ S.game.activeZone=z; save(); renderZoo(); }
 function toggleZooEdit(){ ZOO_EDIT=!ZOO_EDIT; renderZoo(); }
+function toggleZooNight(){
+  const f=S.game.zooNachtForce;
+  S.game.zooNachtForce = (f==null) ? true : (f===true ? false : null);   // auto → nacht → dag → auto
+  save(); renderZoo();
+  const lbl = S.game.zooNachtForce==null ? "automatisch (volgt de klok) 🕒" : S.game.zooNachtForce ? "nacht 🌙" : "dag ☀️";
+  toast("🌗","Zoo-sfeer: "+lbl);
+}
 
 /* parkkaart-minimap: alle zones als enclosure-cellen */
 function renderZooMinimap(){
@@ -3504,7 +3575,7 @@ function tapCritter(id){
   const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
   const node=[...document.querySelectorAll('.critter')].find(n=>n.dataset.id===id);
   if(node){ node.classList.add('jumping'); setTimeout(()=>node.classList.remove('jumping'),500); }
-  d.blijheid=Math.min(100,(d.blijheid||80)+1); save();
+  d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+1); save();
   openAnimalDetail(id);
 }
 
@@ -3726,6 +3797,7 @@ function openAnimalDetail(id){
       <div class="miniStat"><div class="ms-l"><div class="ms-ic l">🎂</div><div class="ms-lab">Leeftijd</div></div><div class="ms-val" style="font-size:14px">${animalAge(d)}</div></div>
       <div class="miniStat"><div class="ms-l"><div class="ms-ic m">🌱</div><div class="ms-lab">Groei</div></div><div class="ms-val" style="font-size:14px">${stageLabel} · ${groeiPct}%</div></div>
       <div class="miniStat"><div class="ms-l"><div class="ms-ic p">💛</div><div class="ms-lab">Blijheid</div></div><div class="ms-val" style="font-size:14px">${Math.round(d.blijheid)}%</div></div>
+      <div class="miniStat"><div class="ms-l"><div class="ms-ic a">${TYPE_ICON[d.sport]||"🏅"}</div><div class="ms-lab">Sportmaatje</div></div><div class="ms-val" style="font-size:14px">${SPORT_LABEL[d.sport]||"—"}</div></div>
     </div>
     <div class="signal" style="margin:0 0 12px"><span class="si">💡</span><div><b>Leuk weetje:</b> ${esc(a.weetje)}</div></div>
     ${a.perk?`<div class="chip pink" style="margin-bottom:12px">⭐ ${a.perk.label}</div>`:""}
@@ -3738,7 +3810,7 @@ function openAnimalDetail(id){
       <button class="btn mint" onclick="feedAnimal('${id}')">🍖 Voeren (50 🐾)</button>
       ${d.soort!=='stekkie'?`<button class="btn danger" onclick="releaseAnimal('${id}')">Vrijlaten</button>`:""}
     </div>
-    <div class="cardsub" style="margin-top:8px">Voeren laat 'm sneller groeien — honger bestaat hier niet, het is puur leuk. 💖</div>`);
+    <div class="cardsub" style="margin-top:8px">Blijheid zakt langzaam (sneller als 'ie hoog staat, milder als 'ie al laag is). Doe een ${TYPE_ICON[d.sport]||"🏅"} <b>${TYPE_LABEL[d.sport]||"training"}</b>-sessie en ${esc(d.naam)} springt weer blij omhoog 🐾 (voeren geeft ook een beetje + groei).</div>`);
 }
 function saveAnimal(id){
   const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
@@ -3748,7 +3820,7 @@ function saveAnimal(id){
 function feedAnimal(id){
   const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
   if(S.game.pootjes<50){ toast("🐾","Nog niet genoeg Pootjes om te voeren."); return; }
-  S.game.pootjes-=50; d.groei=Math.min(1,(d.groei||0.4)+0.2); d.blijheid=Math.min(100,(d.blijheid||80)+10);
+  S.game.pootjes-=50; d.groei=Math.min(1,(d.groei||0.4)+0.2); d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+10);
   save(); refreshChrome();
   if(d.groei>=1) celebrate(d.naam+" is volwassen! 🌟",90); else toast("🍖",d.naam+" groeit lekker!","good");
   openAnimalDetail(id);
@@ -4164,6 +4236,26 @@ async function toggleNotifs(on){
   await setupReminders();
   toast("🔔", on? "Dagelijkse herinnering staat aan 🍑" : "Herinneringen uit.", "good");
 }
+/* directe melding na een gelogde sessie: complimentje + eiwit-reminder.
+   No-op in de browser (LN=null) en als meldingen uit staan. Eigen id (≠ dagelijkse 18:30-reminder). */
+async function fireSessionLoggedNotification(sess){
+  const LN=_ln(); if(!LN || !S.profile.notifs) return;
+  try{
+    const d=todayISO(), tgt=proteinTarget(), tot=proteinDayTotal(d);
+    const proteinHit = tgt ? tot>=tgt : false;
+    const praise = ["Sterk bezig, Bo! 💪","Knal-sessie! 🔥","Topwerk — je bent een machine 🦾","Lekker bezig! 🍑","Trots op je 💖"];
+    const title = "🎉 Sessie gelogd!";
+    let body = praise[Math.floor(Math.random()*praise.length)];
+    if(proteinHit){
+      body += " En je eiwitdoel is al binnen — perfect 🥩✅";
+    } else if(tgt){
+      body += ` Vergeet je eiwitten niet — nog ${Math.max(0,tgt-tot)} g vandaag 🥩`;
+    } else {
+      body += " Vergeet je eiwitten niet vandaag 🥩";
+    }
+    await LN.schedule({ notifications: [{ id: 1772, title, body, schedule: { at: new Date(Date.now()+900) } }] });
+  }catch(e){}
+}
 function init(){
   // OTA: meld de native laag dat deze web-bundle goed geladen is (Capgo, anders rollback). No-op in de browser.
   try{ if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorUpdater) window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady(); }catch(e){}
@@ -4173,6 +4265,8 @@ function init(){
   ensureQuests();
   ensureStepsState();
   sanitizeZones();
+  ensureAnimalSports();
+  applyHappinessDecay();
   computeZooLevel();
   checkMilestones();
   checkStepUrl();
