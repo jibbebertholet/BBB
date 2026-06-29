@@ -482,7 +482,7 @@ function defaultState(){
     profile: {
       naam: "Bo",
       startGewicht: null, streefGewicht: null, lengte: null,
-      eiwitDoel: null,
+      eiwitDoel: null, stappenDoel: 10000,
       cyclusAan: false, cyclusStart: null, cyclusDuur: 28,
       aiEndpoint: "", aiKey: "", aiModel: "claude-haiku-4-5",
       accent: "#ff4d97", zooNaam: "Bo's Beestenboel",
@@ -491,7 +491,7 @@ function defaultState(){
     weights: [],            // [{datum, kg}]
     sessions: [],           // gelogde trainingen (zie fase 2)
     protein: {},            // {YYYY-MM-DD: {meals:[{id,naam,gram}], gehaald, notitie}}
-    steps: {},              // {YYYY-MM-DD: {steps, eggsAwarded}}  (fase 8)
+    steps: {},              // {YYYY-MM-DD: {steps, pootjesAwarded, hatchCounted}}  (fase 8)
     cycle: [],              // [YYYY-MM-DD] menstruatie-startdatums
     templates: null,        // null => standaard uit TEMPLATES (fase 2)
     customExercises: [],    // extra oefeningen door Bo toegevoegd
@@ -512,7 +512,7 @@ function defaultGame(){
     decoraties: [],         // [{id, soort(emoji-key), zone, x, y}]
     faciliteiten: [],       // [{id, soort, zone}]  (fase 8 tycoon)
     streakDagen: 0, streakLaatste: null, streakRecord: 0,
-    eieren: 0, sessiesSindsEi: 0, pityTeller: 0,
+    eieren: 0, sessiesSindsEi: 0, pityTeller: 0, broedStappen: 0,
     album: ["stekkie"],     // ontdekte soorten
     badges: [],
     quests: null, questMaand: null,
@@ -2459,7 +2459,7 @@ function gameAfterSession(s, ctx){
   if(g.streakDagen===7 && g.streak7Awarded!==g.streakLaatste){ g.streak7Awarded=g.streakLaatste; bonus+=50; grantBadge("streak_7"); messages.push({icon:"🔥",text:"7 dagen op rij! +50 🔥"}); }
   // ei elke 5 sessies
   g.sessiesSindsEi=(g.sessiesSindsEi||0)+1;
-  if(g.sessiesSindsEi>=SESSIONS_PER_EGG){ g.sessiesSindsEi=0; g.eieren=(g.eieren||0)+1; messages.push({icon:"🥚",text:"Mystery-ei verdiend! Broed 'm uit in de Zoo 🥚"}); }
+  if(g.sessiesSindsEi>=SESSIONS_PER_EGG){ g.sessiesSindsEi=0; g.eieren=(g.eieren||0)+1; messages.push({icon:"🥚",text:`Mystery-ei verdiend! Loop 'm uit (${fmt(HATCH_STEPS)} stappen) 🚶‍♀️🐣`}); }
   // sportmaatjes worden blijer van een matchende training (blijheid zakt anders 25/dag)
   const boostRes = boostAnimalsForSession(s);
   if(boostRes.n>0){
@@ -2495,20 +2495,44 @@ function gameAfterProtein(rec){
 }
 
 /* ---- stappen → eieren (web: handmatig + Apple Shortcut-URL-brug) ---- */
-const STEPS_PER_EGG = 30000;
-const SESSIONS_PER_EGG = 5;
+const HATCH_STEPS = 20000;                                // stappen om 1 ei uit te broeden (eieren verdien je met trainingen)
+const STEP_POOTJES_BLOCK = 2000, STEP_POOTJES_AMT = 15;   // 15 Pootjes per 2000 stappen
+const SESSIONS_PER_EGG = 3;                               // 3 trainingen = 1 ei
 function ensureStepsState(){ if(!S.steps) S.steps={}; }
 function stepsToday(){ ensureStepsState(); return (S.steps[todayISO()]||{}).steps||0; }
-function recordSteps(steps, dateISO){
+function stepTarget(){ const v=S.profile.stappenDoel; return (v && v>0)? v : 10000; }
+function stepDayHit(d){ const st=S.steps[d]; if(!st) return false; const tgt=stepTarget(); return !!(tgt && num(st.steps)>=tgt); }
+function stepWeekly(){ const by={}; Object.keys(S.steps||{}).forEach(d=>{ const m=mondayOf(d); by[m]=by[m]||0; if(stepDayHit(d)) by[m]++; }); return by; }
+function recordSteps(steps, dateISO, opts){
+  opts=opts||{};
   ensureStepsState();
   const d=dateISO||todayISO(); steps=Math.max(0,Math.round(num(steps)));
-  const cur=S.steps[d]||{steps:0, eggsAwarded:0};
-  cur.steps=Math.max(cur.steps||0, steps);   // dagtotaal; max voorkomt verlagen bij her-sync
-  const totalEggs=Math.floor(cur.steps/STEPS_PER_EGG);
-  const newEggs=Math.max(0, totalEggs-(cur.eggsAwarded||0));
-  if(newEggs>0){ cur.eggsAwarded=totalEggs; S.game.eieren=(S.game.eieren||0)+newEggs; }
-  S.steps[d]=cur; save(); refreshChrome();
-  return {newEggs, total:cur.steps};
+  const cur=S.steps[d]||{steps:0, pootjesAwarded:0, hatchCounted:0};
+  cur.steps = opts.exact ? steps : Math.max(cur.steps||0, steps);   // handmatig = exact (mag omlaag); sync = max
+  // Pootjes: 15 per 2000 stappen — zakt mee bij een omlaag-correctie (delta mag negatief; addPootjes clampt op 0)
+  const totalStepPootjes=Math.floor(cur.steps/STEP_POOTJES_BLOCK)*STEP_POOTJES_AMT;
+  const deltaPootjes=totalStepPootjes-(cur.pootjesAwarded||0);
+  cur.pootjesAwarded=totalStepPootjes;
+  if(deltaPootjes) addPootjes(deltaPootjes, "stappen");
+  const newPootjes=Math.max(0, deltaPootjes);   // alleen positief tonen in de toast
+  // uitbroeden: stappen-verschil = broed-voortgang (signed → omlaag-correctie telt ook terug, geclamped op 0)
+  const delta=cur.steps-(cur.hatchCounted||0);
+  cur.hatchCounted=cur.steps;
+  S.game.broedStappen=Math.max(0,(S.game.broedStappen||0)+delta);
+  S.steps[d]=cur;
+  const hatched=processHatching();
+  save(); refreshChrome();
+  return {newPootjes, total:cur.steps, hatched};
+}
+function processHatching(){
+  const g=S.game; const out=[];
+  while((g.broedStappen||0)>=HATCH_STEPS && (g.eieren||0)>0){
+    g.broedStappen-=HATCH_STEPS;
+    const res=hatchOneEgg();   // eieren--, dier erbij
+    if(res) out.push(res); else break;
+  }
+  if((g.broedStappen||0)>HATCH_STEPS) g.broedStappen=HATCH_STEPS;   // niet oneindig bufferen zonder eieren
+  return out;
 }
 function handleStepUrl(url){
   try{
@@ -2521,7 +2545,7 @@ function handleStepUrl(url){
     const today=todayISO(); let date=params.get("date")||today;
     const gap=daysBetween(date, today); if(!(gap===0||gap===1)) date=today;   // alleen vandaag of gisteren accepteren
     const r=recordSteps(steps, date);
-    setTimeout(()=>{ if(r.newEggs>0) celebrate(`${fmt(steps)} stappen gesynct — +${r.newEggs} ${plural(r.newEggs,"ei","eieren")}! 👟🥚`,100); else toast("👟", fmt(steps)+" stappen gesynct!","good"); }, 700);
+    setTimeout(()=>{ if(r.hatched && r.hatched.length) showHatchReveal(r.hatched); else if(r.newPootjes>0) toast("👟", `${fmt(steps)} stappen — +${r.newPootjes} Pootjes 🐾!`,"good"); else toast("👟", fmt(steps)+" stappen gesynct!","good"); }, 700);
   }catch(e){}
 }
 let _stepNativeBound=false;
@@ -2543,19 +2567,28 @@ function checkStepUrl(){
 }
 function openStepLogger(){
   ensureStepsState();
-  const d=todayISO(), cur=S.steps[d]||{steps:0,eggsAwarded:0};
-  const toNext = STEPS_PER_EGG - (cur.steps % STEPS_PER_EGG);
-  const pct = Math.round((cur.steps % STEPS_PER_EGG)/STEPS_PER_EGG*100);
+  const d=todayISO(), cur=S.steps[d]||{steps:0};
+  const g=S.game, eieren=g.eieren||0;
+  const broedPct = Math.round(clamp((g.broedStappen||0)/HATCH_STEPS*100,0,100));
+  const toHatch = Math.max(0, HATCH_STEPS-(g.broedStappen||0));
   const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const openUrl = isNative ? "bbb://steps?steps=[Resultaat]" : (((location.origin && location.origin!=="null") ? location.origin+location.pathname : "https://<jouw-app-url>")+"?steps=[Resultaat]");
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
-    <h2>👟 Stappen → eieren</h2>
-    <div class="msub">Elke ${fmt(STEPS_PER_EGG)} stappen levert een mystery-ei op. Stappen komen <b>automatisch uit Gezondheid</b> via de Apple Shortcut hieronder — zo zijn ze altijd eerlijk verdiend. 👟</div>
+    <h2>👟 Stappen</h2>
+    <div class="msub">Je stappen <b>broeden je eieren uit</b> — elke ${fmt(HATCH_STEPS)} stappen komt er eentje uit (eieren verdien je met ${SESSIONS_PER_EGG} trainingen). En je krijgt ${STEP_POOTJES_AMT} Pootjes per ${fmt(STEP_POOTJES_BLOCK)} stappen. 🐾</div>
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
-      <div class="ringwrap">${ring(pct,98,{big:fmt(cur.steps), sub:"vandaag", c0:"#ff85b8", c1:"#3ad9b3", sw:9})}</div>
-      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">Nog ${fmt(toNext)} stappen tot je volgende ei 🥚</div>
-        <div class="cardsub" style="margin-top:4px">${cur.eggsAwarded||0} ${plural(cur.eggsAwarded||0,"ei","eieren")} verdiend met stappen vandaag</div></div>
+      <div class="ringwrap">${ring(broedPct,98,{big:broedPct+"%", sub:"uitbroeden", c0:"#ff85b8", c1:"#3ad9b3", sw:9})}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">${fmt(cur.steps||0)} stappen vandaag</div>
+        <div class="cardsub" style="margin-top:4px">${eieren>0?`Nog ${fmt(toHatch)} stappen tot een ei uitkomt 🐣 · ${eieren} aan 't broeden`:"Geen eieren — verdien er een met trainen 🥚"}</div></div>
     </div>
+    <div class="frow c1" style="margin-bottom:4px"><div class="field">
+      <label>✏️ Stappen handmatig invullen (vandaag)</label>
+      <div style="display:flex;gap:8px;align-items:end">
+        <input id="man_steps" type="number" inputmode="numeric" min="0" max="100000" placeholder="bv. 8500" value="${cur.steps||""}" style="flex:1">
+        <button class="btn" onclick="addStepsManually()">Opslaan</button>
+      </div>
+    </div></div>
+    <div class="cardsub" style="margin:0 0 12px">Op de native app gaat dit straks automatisch via de Apple Shortcut hieronder. 👇</div>
     <details open style="margin-top:4px"><summary style="cursor:pointer;font-size:12.5px;color:var(--rose);font-weight:700;list-style:none;user-select:none">📲 Automatisch syncen via Apple Shortcut (eenmalig instellen)</summary>
       <div style="margin-top:10px;font-size:13px;color:var(--dim);line-height:1.6">
         Maak in de <b>Opdrachten</b>-app (gratis op iPhone) een Shortcut met twee acties:
@@ -2565,6 +2598,15 @@ function openStepLogger(){
         </ol>
         Eén tik op de Shortcut synct je stappen en kent de eieren toe. Zet 'm ook als dagelijkse automatisering, dan gaat het vanzelf.
       </div></details>`);
+}
+function addStepsManually(){
+  const inp=el("man_steps"); if(!inp) return;
+  let v=num(inp.value);
+  if(!isFinite(v)||v<0){ toast("🤔","Vul een geldig aantal stappen in."); return; }
+  if(v>100000) v=100000;
+  const r=recordSteps(Math.round(v), todayISO(), {exact:true});
+  closeModal();
+  setTimeout(()=>{ if(r.hatched && r.hatched.length) showHatchReveal(r.hatched); else if(r.newPootjes>0) toast("👟", `${fmt(r.total)} stappen — +${r.newPootjes} Pootjes 🐾!`,"good"); else toast("👟", fmt(r.total)+" stappen opgeslagen!","good"); }, 200);
 }
 
 /* ---- eieren met pity ---- */
@@ -2716,6 +2758,58 @@ function proteinCard(){
     </div>
   </div>`;
 }
+let stepsChartMode="dagen";
+function setStepsChartMode(m){ stepsChartMode=m; renderVandaag(); }
+function stepsCard(){
+  ensureStepsState();
+  const today=todayISO(), steps=stepsToday();
+  const goal=stepTarget(), goalHit=steps>=goal;
+  const goalPct=Math.round(clamp(steps/goal*100,0,100)), toGoal=Math.max(0,goal-steps);
+  const eieren=S.game.eieren||0;
+  const broedPct=Math.round(clamp((S.game.broedStappen||0)/HATCH_STEPS*100,0,100));
+  const mon=thisMonday(); let week=0; Object.keys(S.steps).forEach(d=>{ if(d>=mon) week+=num((S.steps[d]||{}).steps||0); });
+  let chartSvg, chartTitle;
+  if(stepsChartMode==="dagen"){
+    const dayBars=[]; for(let i=6;i>=0;i--){ const dd=addDays(today,-i); const ds=num((S.steps[dd]||{}).steps||0); dayBars.push({label:parseISO(dd).toLocaleDateString("nl-NL",{weekday:"short"}), value:ds, plan:goal, grad:["#ff85b8","#ff4d97"], hi:dd===today}); }
+    chartSvg=barChart(dayBars,{h:150,padL:44,yTicks:4,fmt:v=> v>=1000?Math.round(v/1000)+"k":(v||"")});
+    chartTitle="Stappen per dag";
+  } else {
+    const by=stepWeekly();
+    const weekBars=lastNWeeks(7).map(m=>({label:fmtDate(m,{day:"numeric",month:"short"}), value:by[m]||0, plan:7, grad:["#ff85b8","#ff4d97"], hi:m===thisMonday()}));
+    chartSvg=barChart(weekBars,{h:150,max:7,yTicks:7,fmt:v=>fmt(v,0)});
+    chartTitle="Doel per week";
+  }
+  return `<div class="card">
+    <div class="charttitle"><h3><span class="ic">👟</span>Stappen</h3>${eieren>0?`<span class="chip mint">🥚 ${eieren} aan 't broeden</span>`:(goalHit?`<span class="chip mint">dagdoel gehaald 🎉</span>`:`<span class="chip mut">doel ${fmt(goal)}</span>`)}</div>
+    <div style="display:flex;align-items:center;gap:13px">
+      <div style="width:4px;align-self:stretch;min-height:60px;border-radius:3px;background:linear-gradient(180deg,#ff85b8,#3ad9b3)"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:19px;font-weight:800">${fmt(steps)} <span style="font-size:13px;color:var(--dim);font-weight:600">stappen vandaag</span></div>
+        <div class="cardsub" style="margin:3px 0 0">${goalHit?"Dagdoel gehaald — top! 💪":`Nog <b>${fmt(toGoal)}</b> tot je dagdoel`}</div>
+        <div class="cardsub" style="margin-top:5px">Deze week: <b>${fmt(week)}</b> stappen</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:42px;margin:16px 0 4px">
+      <div style="text-align:center">
+        <div class="ringwrap">${ring(goalPct,104,{big:goalPct+"%", sub:"dagdoel", c0:"#ff85b8", c1:goalHit?"#3ad9b3":"#ff4d97", sw:12})}</div>
+        <div class="cardsub" style="margin-top:6px">🎯 Dagdoel</div>
+      </div>
+      <div style="text-align:center">
+        <div class="ringwrap">${ring(broedPct,104,{big:broedPct+"%", sub:"uitbroeden", c0:"#ff85b8", c1:"#3ad9b3", sw:12})}</div>
+        <div class="cardsub" style="margin-top:6px">🐣 ${eieren>0?"Uitbroeden":"Geen ei"}</div>
+      </div>
+    </div>
+    <div class="charttitle" style="margin-top:10px;align-items:center;flex-wrap:nowrap"><h3 style="font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="ic">📅</span>${chartTitle}</h3>
+      <div style="display:flex;gap:5px;flex-shrink:0">
+        <button class="btn sm ${stepsChartMode==="dagen"?"":"ghost"}" style="padding:4px 11px;min-height:0" onclick="setStepsChartMode('dagen')">Dagen</button>
+        <button class="btn sm ${stepsChartMode==="weken"?"":"ghost"}" style="padding:4px 11px;min-height:0" onclick="setStepsChartMode('weken')">Weken</button>
+      </div></div>
+    ${chartSvg}
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" onclick="openStepLogger()">👟 Stappen invoeren & sync</button>
+    </div>
+  </div>`;
+}
 function renderVandaag(){
   const p=S.profile, g=S.game, wk=ensureWeek();
   const done=weekDoneCount(), pct=Math.round(clamp(done/5,0,1)*100);
@@ -2776,11 +2870,13 @@ function renderVandaag(){
 
     ${proteinCard()}
 
+    ${stepsCard()}
+
     <div class="row r-2">
       <div class="card" onclick="go('zoo')" style="cursor:pointer">
         <div class="charttitle"><h3><span class="ic">🦁</span>${esc(p.zooNaam||"Bo's Beestenboel")}</h3><span class="chip pink">niveau ${g.zooNiveau}</span></div>
         ${zooStrip()}
-        <div class="cardsub" style="margin-top:10px">${nextUnlockHint()||"Je zoo groeit met elke training"} ${(g.eieren||0)>0?` · 🥚 ${g.eieren} ${plural(g.eieren,"ei","eieren")} klaar!`:""}</div>
+        <div class="cardsub" style="margin-top:10px">${nextUnlockHint()||"Je zoo groeit met elke training"} ${(g.eieren||0)>0?` · 🥚 ${g.eieren} ${plural(g.eieren,"ei","eieren")} aan 't broeden`:""}</div>
       </div>
       ${prCarousel()}
     </div>
@@ -3705,41 +3801,43 @@ function delDeco(id){ S.game.decoraties=S.game.decoraties.filter(d=>d.id!==id); 
 /* ---- eieren ---- */
 function openEggModal(){
   const g=S.game;
-  const prog = Math.round(((g.sessiesSindsEi||0)/SESSIONS_PER_EGG)*100);
+  const broedPct=Math.round(clamp((g.broedStappen||0)/HATCH_STEPS*100,0,100));
+  const toHatch=Math.max(0,HATCH_STEPS-(g.broedStappen||0));
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
     <h2>🥚 Mystery-eieren</h2>
-    <div class="msub">Elke ${SESSIONS_PER_EGG} sessies verdien je een ei. Broed 'm uit voor een willekeurig dier — na genoeg eieren valt er gegarandeerd een legendarisch dier (eerlijk pity-systeem).</div>
+    <div class="msub">Eieren verdien je met <b>elke ${SESSIONS_PER_EGG} trainingen</b>. Je broedt ze uit door te <b>lopen</b> — elke ${fmt(HATCH_STEPS)} stappen komt er eentje uit. 🚶‍♀️🐣</div>
     <div style="text-align:center;padding:10px 0">
       ${(g.eieren||0)>0
-        ? `<div class="eggwrap"><div class="egg" id="theEgg" onclick="doHatch()">🥚</div>
-            <div style="font-size:14px;font-weight:700">${g.eieren} ${plural(g.eieren,"ei","eieren")} klaar!</div>
-            <button class="btn lg" style="margin-top:8px" onclick="doHatch()">Broed uit! 🐣</button></div>`
+        ? `<div class="eggwrap"><div style="font-size:64px">🥚</div>
+            <div style="font-size:15px;font-weight:800;margin-top:4px">${g.eieren} ${plural(g.eieren,"ei","eieren")} aan het broeden</div>
+            <div style="font-size:13px;color:var(--mut);margin-top:4px">Nog <b>${fmt(toHatch)}</b> stappen tot de volgende uitkomt 🐣</div>
+            <div class="progbar" style="margin-top:10px;max-width:240px"><i style="width:${broedPct}%"></i></div></div>`
         : `<div class="eggwrap"><div style="font-size:64px;opacity:.5">🥚</div>
-            <div style="font-size:13px;color:var(--mut)">Nog geen eieren. Nog ${SESSIONS_PER_EGG-(g.sessiesSindsEi||0)} ${plural(SESSIONS_PER_EGG-(g.sessiesSindsEi||0),"sessie","sessies")} tot je volgende ei.</div>
-            <div class="progbar" style="margin-top:10px;max-width:240px"><i style="width:${prog}%"></i></div></div>`}
+            <div style="font-size:15px;font-weight:800;margin-top:6px">Verdien eerst een ei! 🥚</div>
+            <div style="font-size:13px;color:var(--mut);margin-top:4px">Nog ${SESSIONS_PER_EGG-(g.sessiesSindsEi||0)} ${plural(SESSIONS_PER_EGG-(g.sessiesSindsEi||0),"sessie","sessies")} tot je volgende ei. Daarna loop je 'm uit! 🚶‍♀️</div></div>`}
     </div>
     <div class="cardsub" style="text-align:center">Pity-teller: ${g.pityTeller||0}/8 tot gegarandeerd legendarisch · ${g.totaalEierenUit||0} uitgebroed</div>`);
 }
-function doHatch(){
-  const eggEl=el("theEgg"); if(eggEl) eggEl.classList.add("hatching");
-  setTimeout(()=>{
-    const res=hatchOneEgg();
-    if(!res){ closeModal(); return; }
-    const a=ANIMALS[res.soort];
-    confetti(a.rarity==="legendarisch"?170:a.rarity==="zeldzaam"?110:70); chime("party");
-    openModal(`<button class="x" onclick="closeModal();renderZoo()">✕</button>
-      <h2 style="text-align:center">${res.wasNew?"Nieuw dier! ✨":"Het is..."}</h2>
-      <div style="text-align:center">
-        <div style="width:140px;height:140px;margin:6px auto">${creatureSVG(a.cfg,{stage:"baby",happy:true})}</div>
-        <div style="font-size:20px;font-weight:800">${a.naam}</div>
-        <span class="rar rar-${a.rarity}" style="position:static;display:inline-block;margin-top:6px">${RARITY_LABEL[a.rarity]}</span>
-        <div class="cardsub" style="margin-top:10px">${esc(a.weetje)}</div>
-        ${res.dupBonus?`<div class="chip mint" style="margin-top:8px">Dubbel — +${res.dupBonus} Pootjes 🐾</div>`:""}
-        ${(S.game.eieren>0)?`<div style="margin-top:14px"><button class="btn" onclick="openEggModal()">Volgend ei (${S.game.eieren}) 🥚</button></div>`
-          :`<div style="margin-top:14px"><button class="btn" onclick="closeModal();renderZoo()">Naar mijn zoo 🦁</button></div>`}
-      </div>`);
-    refreshChrome();
-  }, 650);
+let _pendingHatches=[];
+function showHatchReveal(hatched){
+  if(hatched) _pendingHatches=hatched.slice();
+  if(!_pendingHatches.length){ closeModal(); renderZoo(); return; }
+  const res=_pendingHatches.shift();
+  const a=ANIMALS[res.soort];
+  confetti(a.rarity==="legendarisch"?170:a.rarity==="zeldzaam"?110:70); chime("party");
+  openModal(`<button class="x" onclick="closeModal();renderZoo()">✕</button>
+    <h2 style="text-align:center">🐣 ${res.wasNew?"Nieuw dier!":"Uitgekomen!"} ✨</h2>
+    <div style="text-align:center">
+      <div style="width:140px;height:140px;margin:6px auto">${creatureSVG(a.cfg,{stage:"baby",happy:true})}</div>
+      <div style="font-size:20px;font-weight:800">${a.naam}</div>
+      <span class="rar rar-${a.rarity}" style="position:static;display:inline-block;margin-top:6px">${RARITY_LABEL[a.rarity]}</span>
+      <div class="cardsub" style="margin-top:10px">${esc(a.weetje)}</div>
+      ${res.dupBonus?`<div class="chip mint" style="margin-top:8px">Dubbel — +${res.dupBonus} Pootjes 🐾</div>`:""}
+      ${_pendingHatches.length
+        ? `<div style="margin-top:14px"><button class="btn" onclick="showHatchReveal()">Volgende (${_pendingHatches.length}) 🐣</button></div>`
+        : `<div style="margin-top:14px"><button class="btn" onclick="closeModal();renderZoo()">Naar mijn zoo 🦁</button></div>`}
+    </div>`);
+  refreshChrome();
 }
 
 /* ---- dierengids ---- */
@@ -3911,8 +4009,6 @@ function renderLogboek(){
     <div class="toolbar">
       <button class="btn ghost" onclick="exportData()">⬇️ Exporteer back-up</button>
       <label class="btn ghost" style="cursor:pointer">⬆️ Importeer<input type="file" id="importFile" accept="application/json" style="display:none"></label>
-      <div class="sp"></div>
-      <button class="btn danger" onclick="confirmWipe()">🗑️ Wis alle data</button>
     </div>
 
     <div class="card" style="margin-bottom:14px">
@@ -3927,6 +4023,7 @@ function renderLogboek(){
         <div class="field"><label>Streefgewicht (kg)</label><input id="set_streef" type="number" step="0.1" value="${p.streefGewicht??""}"></div>
         <div class="field"><label>Lengte (cm)</label><input id="set_lengte" type="number" value="${p.lengte??""}"></div>
         <div class="field"><label>Eiwitdoel (g/dag)</label><input id="set_eiwit" type="number" value="${p.eiwitDoel??""}" placeholder="auto"></div>
+        <div class="field"><label>Dagelijks stappendoel</label><input id="set_stappen" type="number" value="${p.stappenDoel??10000}" placeholder="10000"></div>
       </div>
       <div class="factions"><button class="btn sm" onclick="saveProfiel()">Opslaan</button>
         <span id="eiwitHint" class="cardsub" style="margin:0"></span></div>
@@ -4039,6 +4136,7 @@ function saveProfiel(){
   p.streefGewicht=isNum(el("set_streef").value)?num(el("set_streef").value):null;
   p.lengte=isNum(el("set_lengte").value)?num(el("set_lengte").value):null;
   p.eiwitDoel=isNum(el("set_eiwit").value)?num(el("set_eiwit").value):null;
+  p.stappenDoel=isNum(el("set_stappen").value)?num(el("set_stappen").value):10000;
   // eerste weging vastleggen als gewichtslog nog leeg is
   if(p.startGewicht && !S.weights.length) S.weights.push({datum:todayISO(), kg:p.startGewicht});
   save(); refreshChrome(); renderEiwitHint(); toast("✅","Profiel opgeslagen.","good");
@@ -4113,23 +4211,6 @@ function importData(ev){
     finally{ ev.target.value=""; } };
   r.readAsText(f);
 }
-function confirmWipe(){
-  openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
-    <h2>Alles wissen? 🗑️</h2>
-    <div class="msub">Dit verwijdert <b>alle</b> data: je sessies, gewicht, je hele zoo en alle Pootjes. Dit kan niet ongedaan worden. Exporteer eerst een back-up als je twijfelt.</div>
-    <div class="factions">
-      <button class="btn danger" onclick="doWipe()">Ja, wis alles</button>
-      <button class="btn ghost" onclick="closeModal()">Annuleren</button>
-      <button class="btn" onclick="closeModal();exportData()">Eerst back-up maken</button>
-    </div>`);
-}
-function doWipe(){
-  localStorage.removeItem(STORE_KEY);
-  S=defaultState();
-  closeModal(); applyAccent(); refreshChrome();
-  S.profile.onboarded=false; startOnboarding();
-  toast("🧼","Schone lei. Tot snel!","good");
-}
 
 /* ============================================================
    ONBOARDING  (eerste keer)
@@ -4147,6 +4228,9 @@ function startOnboarding(){
       <div class="field"><label>Huidig gewicht (kg)</label><input id="ob_start" type="number" step="0.1" value="${p.startGewicht??""}" placeholder="bv. 70"></div>
       <div class="field"><label>Streefgewicht (kg)</label><input id="ob_streef" type="number" step="0.1" value="${p.streefGewicht??""}" placeholder="bv. 64"></div>
     </div>
+    <div class="frow c2">
+      <div class="field"><label>Dagelijks stappendoel</label><input id="ob_stappenDoel" type="number" inputmode="numeric" value="${p.stappenDoel??10000}" placeholder="10000"></div>
+    </div>
     <div style="display:flex;align-items:center;gap:12px;margin:4px 0 14px">
       <div class="toggle ${p.cyclusAan?"on":""}" id="ob_cyclusToggle" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:13.5px;color:var(--dim)">Cyclus-tracking gebruiken (privé, kan later)</span>
@@ -4163,6 +4247,7 @@ function finishOnboarding(){
   p.startGewicht=isNum(el("ob_start").value)?num(el("ob_start").value):null;
   p.streefGewicht=isNum(el("ob_streef").value)?num(el("ob_streef").value):null;
   p.cyclusAan=el("ob_cyclusToggle").classList.contains("on");
+  p.stappenDoel=isNum(el("ob_stappenDoel").value)?num(el("ob_stappenDoel").value):10000;
   if(p.startGewicht){ S.weights=[{datum:todayISO(), kg:p.startGewicht}]; }
   if(!p.eiwitDoel && p.startGewicht) p.eiwitDoel=Math.round(p.startGewicht*1.8);
   p.onboarded=true;
