@@ -3144,7 +3144,7 @@ function weekOverzichtCard(){
     </div>
   </div>`;
 }
-function weekSummaryText(){
+function weekContextText(){
   const st=weekStats(), p=S.profile, wk=S.week;
   const L=[];
   L.push(`BBB weekoverzicht voor ${p.naam||"Bo"} — week van ${fmtDate(thisMonday(),{day:"numeric",month:"long",year:"numeric"})}`);
@@ -3172,9 +3172,10 @@ function weekSummaryText(){
   if(st.rec.verm||st.rec.pijn||st.rec.slaap) L.push(`Herstel (gem.): vermoeidheid ${st.rec.verm?st.rec.verm.toFixed(1):"-"}, spierpijn ${st.rec.pijn?st.rec.pijn.toFixed(1):"-"}, slaap ${st.rec.slaap?st.rec.slaap.toFixed(1)+"u":"-"}`);
   if(p.cyclusAan){ const ph=cyclePhase(); if(ph) L.push(`Cyclusfase: ${ph.label} (dag ${ph.day})`); }
   if(wk&&wk.uitleg&&wk.uitleg.length){ L.push(""); L.push("Wat de adaptieve engine aanpaste/voorstelt:"); wk.uitleg.forEach(u=>L.push(`- ${u.text}`)); }
-  L.push("");
-  L.push("Vraag: geef me warme, concrete coaching voor volgende week — wat ging goed, waar letten we op, en 1 of 2 haalbare focuspunten. Geen streng dieet, focus op kracht/booty, consistentie en lekker voelen.");
   return L.join("\n");
+}
+function weekSummaryText(){
+  return weekContextText()+"\n\nVraag: geef me warme, concrete coaching voor volgende week — wat ging goed, waar letten we op, en 1 of 2 haalbare focuspunten. Geen streng dieet, focus op kracht/booty, consistentie en lekker voelen.";
 }
 function showWeekSummary(){
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>👀 Weeksamenvatting</h2>
@@ -3205,19 +3206,25 @@ function aiCoachCard(){
       <button class="btn" onclick="askAICoach()">${has?"✨ Vraag coaching":"📋 Kopieer voor Claude"}</button>
       ${has?`<button class="btn ghost" onclick="copyForClaude()">📋 Kopieer i.p.v.</button>`:""}
     </div>
+    ${has?`<div class="frow c1" style="margin-top:10px"><div class="field">
+      <label>Of stel je coach een vraag</label>
+      <div style="display:flex;gap:8px;align-items:end">
+        <input id="ai_vraag" placeholder="bv. Hoe verbeter ik mijn squat?" onkeydown="if(event.key==='Enter')askAICoachQuestion()" style="flex:1">
+        <button class="btn" onclick="askAICoachQuestion()">Vraag</button>
+      </div>
+    </div></div>`:""}
   </div>`;
 }
-async function askAICoach(){
+const COACH_SYS = "Je bent BBB, de persoonlijke fitnesscoach van Bo: warm, positief, nuchter en motiverend. Schrijf in het Nederlands, af en toe een 🍑 of 💪.";
+async function runAICoach(sys, userContent, resultTitle){
   const p=S.profile;
   const direct = !p.aiEndpoint && !!p.aiKey; // native app: sleutel staat op toestel → rechtstreeks naar Anthropic
   if(!p.aiEndpoint && !p.aiKey){ copyForClaude(); return; }
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>🤖 Je coach denkt na…</h2>
-    <div style="text-align:center;padding:24px"><div style="font-size:40px;animation:bob 1s infinite">🐾</div><div class="cardsub" style="margin-top:10px">Even geduld — je coaching-notitie wordt gemaakt.</div></div>`);
+    <div style="text-align:center;padding:24px"><div style="font-size:40px;animation:bob 1s infinite">🐾</div><div class="cardsub" style="margin-top:10px">Even geduld…</div></div>`);
   try{
-    const prompt = weekSummaryText();
     const model = p.aiModel||"claude-haiku-4-5";
-    const sys = "Je bent BBB, de persoonlijke fitnesscoach van Bo: warm, positief, nuchter en motiverend. Schrijf in het Nederlands, af en toe een 🍑 of 💪. Geef op basis van haar weekoverzicht een korte, persoonlijke coaching-notitie (max ~180 woorden): benoem 1-2 dingen die goed gaan, geef 1-2 concrete, haalbare tips voor komende week, en sluit lief en aanmoedigend af. Geen medische claims of streng dieetadvies — focus op kracht, consistentie en lekker voelen.";
-    const body = { model, max_tokens: 700, system: sys, messages:[{role:"user", content: prompt}] };
+    const body = { model, max_tokens: 700, system: sys, messages:[{role:"user", content: userContent}] };
     let url, headers;
     if(direct){
       url = "https://api.anthropic.com/v1/messages";
@@ -3231,7 +3238,7 @@ async function askAICoach(){
     const data = await res.json();
     const text = (data.content&&data.content[0]&&data.content[0].text) || data.completion || data.text || data.message || (typeof data==="string"?data:"");
     if(!text || !text.trim()){ closeModal(); toast("🤔","De coach gaf een leeg antwoord — probeer het zo nog eens."); return; }
-    openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>🤖 Je coaching-notitie</h2>
+    openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>🤖 ${resultTitle}</h2>
       <div style="white-space:pre-wrap;font-size:14px;line-height:1.6;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:14px;max-height:50vh;overflow:auto">${esc(text)}</div>
       <div class="factions" style="margin-top:12px"><button class="btn ghost" onclick="closeModal()">Sluiten</button></div>`, true);
   }catch(e){
@@ -3240,6 +3247,19 @@ async function askAICoach(){
       <div class="msub">Er ging iets mis (${esc(e.message)}). ${hint} Je kunt altijd de samenvatting kopiëren en in een Claude-chat plakken.</div>
       <div class="factions"><button class="btn" onclick="closeModal();copyForClaude()">📋 Kopieer voor Claude</button><button class="btn ghost" onclick="closeModal()">Sluiten</button></div>`);
   }
+}
+async function askAICoach(){
+  const sys = COACH_SYS+" Geef op basis van haar weekoverzicht een korte, persoonlijke coaching-notitie (max ~180 woorden): benoem 1-2 dingen die goed gaan, geef 1-2 concrete, haalbare tips voor komende week, en sluit lief en aanmoedigend af. Geen medische claims of streng dieetadvies — focus op kracht, consistentie en lekker voelen.";
+  return runAICoach(sys, weekSummaryText(), "Je coaching-notitie");
+}
+async function askAICoachQuestion(){
+  const inp=el("ai_vraag"); if(!inp) return;
+  const vraag=inp.value.trim();
+  if(!vraag){ toast("🤔","Typ eerst je vraag voor de coach."); return; }
+  const sys = COACH_SYS+" Beantwoord Bo's vraag concreet, persoonlijk en kort (max ~180 woorden), met haar weekoverzicht als context waar relevant. Geen medische claims of streng dieetadvies — focus op kracht, consistentie en lekker voelen. Staat de vraag los van fitness, antwoord dan gewoon vriendelijk en behulpzaam.";
+  const userContent = weekContextText()+"\n\n— Bo's vraag aan haar coach: "+vraag;
+  inp.value="";
+  return runAICoach(sys, userContent, "Antwoord van je coach");
 }
 /* ============================================================
    VOORTGANG — data-helpers
