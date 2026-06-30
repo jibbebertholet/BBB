@@ -655,12 +655,13 @@ document.querySelectorAll("#tabs, #botnav").forEach(nav=>{
 /* ============================================================
    TOAST · CONFETTI · MODAL  (gedeelde micro-interacties)
    ============================================================ */
-function toast(emoji, text, kind){
+function toast(emoji, text, kind, ms){
   const t=document.createElement("div");
   t.className="toast"+(kind==="party"?" party":kind==="good"?" good":"");
   t.innerHTML=`<span class="te">${emoji||"✨"}</span><span>${text}</span>`;
   el("toasts").appendChild(t);
-  setTimeout(()=>{ t.style.animation="toastout .3s forwards"; setTimeout(()=>t.remove(),300); }, kind==="party"?3200:2400);
+  const dur = ms || (kind==="party"?3200:2400);
+  setTimeout(()=>{ t.style.animation="toastout .3s forwards"; setTimeout(()=>t.remove(),300); }, dur);
 }
 let modalLocked=false;
 function openModal(html, wide, locked){
@@ -965,14 +966,14 @@ function openExerciseDemo(exId){
 
 const DEFAULT_TEMPLATES = {
   bootyA: { naam:"Booty A", sub:"hinge-nadruk", oef:[
-    {exId:"hip_thrust", sets:4, lo:8, hi:12},
+    {exId:"hip_thrust", sets:4, lo:6, hi:10},
     {exId:"rdl", sets:3, lo:8, hi:10},
     {exId:"bulgarian", sets:3, lo:10, hi:12},
     {exId:"hip_abduction", sets:3, lo:15, hi:20},
     {exId:"cable_kickback", sets:3, lo:12, hi:15}
   ]},
   bootyB: { naam:"Booty B", sub:"squat & volume", oef:[
-    {exId:"hip_thrust", sets:4, lo:8, hi:12},
+    {exId:"hip_thrust", sets:4, lo:6, hi:10},
     {exId:"leg_press", sets:3, lo:10, hi:12},
     {exId:"walking_lunge", sets:3, lo:12, hi:12},
     {exId:"cable_pullthrough", sets:3, lo:12, hi:15},
@@ -1336,7 +1337,12 @@ function openGymLogger(slotId){
     abs: existing ? (existing.abs||null) : null,
     exercises: existing ? existing.oefeningen.map(o=>({exId:o.exId, naam:o.naam, groot:exById(o.exId).groot, sets:o.sets.map(s=>({reps:s.reps,kg:s.kg}))}))
       : tmpl.oef.map(o=>{ const ex=exById(o.exId); const mem=exMemFor(o.exId);
-          const sets=Array.from({length:o.sets},(_,k)=>({reps: mem&&mem.sets[k]?mem.sets[k].reps:"", kg: mem&&mem.sets[k]?mem.sets[k].kg:""}));
+          const adv=(typeof adviseExercise==="function")?adviseExercise(o.exId,o):null;
+          const sugKg=adv&&isNum(adv.suggestKg)?adv.suggestKg:null;   // standaard het coach-voorstel (vorige sessie + progressie)
+          const sets=Array.from({length:o.sets},(_,k)=>({
+            reps: mem&&mem.sets[k]?mem.sets[k].reps:"",
+            kg: sugKg!=null?sugKg:(mem&&mem.sets[k]?mem.sets[k].kg:"")
+          }));
           return {exId:o.exId, naam:ex.naam, groot:ex.groot, lo:o.lo, hi:o.hi, perLeg:ex.perLeg, bw:ex.bw, sets};
         }),
     rec: existing?existing.rec:{}
@@ -1376,7 +1382,7 @@ function renderGymLogger(naam){
     </div>`;
   }).join("");
 
-  openModal(`${logHeader("🏋️‍♀️ "+esc(naam)+" loggen","Vul per set je reps en kg. Naast elke set zie je wat je vorige keer deed — pak 'm terug. 💪","lg_datum",L.datum)}
+  openModal(`${logHeader("🏋️‍♀️ "+esc(naam)+" loggen","Vul per set je reps en kg — naast elke set zie je je vorige keer. Mik op een gewicht waarbij de laatste reps écht zwaar zijn (±1–2 in de tank); de laatste set per oefening mag je extra leegtrekken. 💪","lg_datum",L.datum)}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <button class="btn sm ghost" onclick="gymRepeatLast()">🔁 Herhaal vorige sessie</button>
       <button class="btn sm ghost" onclick="gymAddExercisePrompt()">+ Oefening</button>
@@ -1448,7 +1454,17 @@ function gymSyncDom(){
   L.rec=readRecovery();
 }
 function gymAddSet(ei){ gymSyncDom(); LOGGER.exercises[ei].sets.push({reps:"",kg:""}); renderGymLogger(getTemplates()[LOGGER.templateId].naam); }
-function gymRemoveSet(ei,si){ gymSyncDom(); if(LOGGER.exercises[ei].sets.length>1) LOGGER.exercises[ei].sets.splice(si,1); renderGymLogger(getTemplates()[LOGGER.templateId].naam); }
+function gymRemoveSet(ei,si){
+  gymSyncDom();
+  const ex=LOGGER.exercises[ei];
+  if(ex.sets.length>1){
+    ex.sets.splice(si,1);
+    const tdef=getTemplates()[LOGGER.templateId].oef.find(o=>o.exId===ex.exId);
+    const rec=tdef?tdef.sets:0;
+    if(rec && ex.sets.length<rec) toast("💪",`Voor het mooiste resultaat zijn ${rec} sets ideaal voor je ${ex.naam.toLowerCase()} — maar jij kent je lijf het best, minder mag altijd. ❤️`, null, 3500);
+  }
+  renderGymLogger(getTemplates()[LOGGER.templateId].naam);
+}
 function gymRemoveExercise(ei){ gymSyncDom(); LOGGER.exercises.splice(ei,1); renderGymLogger(getTemplates()[LOGGER.templateId].naam); }
 function gymRepeatLast(){
   const last=lastGymSession(LOGGER.templateId);
@@ -1492,7 +1508,11 @@ function saveGymSession(){
   // exMemory bijwerken per oefening (laatste werkelijke sets)
   oef.forEach(o=>{ if(o.sets.length) S.exMemory[o.exId]={sets:o.sets, datum:L.datum}; });
   commitSession(sess, L.sessionId, L.slotId);
-  // PR-check (fase 4/5 breidt uit); hier al een vlag voor confetti bij zwaardere hip thrust
+  // supportive nudge als geplande oefeningen zijn overgeslagen (niet-blokkerend; sessie is al opgeslagen)
+  const planned=(getTemplates()[L.templateId].oef||[]).filter(o=>!o.optioneel);
+  const doneIds=new Set(oef.map(o=>o.exId));
+  const skipped=planned.filter(o=>!doneIds.has(o.exId)).length;
+  if(skipped>0) setTimeout(()=>toast("💪",`Je sloeg ${skipped} ${plural(skipped,"oefening","oefeningen")} over — voor het mooiste resultaat doe je ze allemaal. Maar top dat je er was! ❤️`, null, 3500),700);
   closeModal();
 }
 
@@ -2438,7 +2458,7 @@ const MILESTONES = [
   {id:"ms_10_sessions", soort:null, badge:"tien_sessies", icon:"🔟", naam:"10 sessies", check:()=>S.sessions.length>=10},
   {id:"ms_first_5k", soort:"otter", icon:"🏅", naam:"Eerste 6 km", check:()=>longestRun()>=6, story:"Je liep je eerste 6 kilometer! Otter komt meezwemmen in je zoo. 🦦"},
   {id:"ms_10k_total", soort:null, badge:"tien_km", icon:"🏃‍♀️", naam:"10 km totaal", check:()=>sum(runHistory(),s=>s.km)>=10},
-  {id:"ms_hipthrust_80", soort:"leeuw", icon:"🦁", naam:"Hip thrust 1RM 60kg", check:()=>best1RMForExercise("hip_thrust").est>=60, story:"Je geschatte hip thrust-1RM ging door de 60 kg! De leeuw brult mee. 🦁"},
+  {id:"ms_hipthrust_80", soort:"leeuw", icon:"🦁", naam:"Hip thrust 40 kg", check:()=>gymSessionsWith("hip_thrust").some(s=>(s.oefeningen||[]).some(o=>o.exId==="hip_thrust"&&(o.sets||[]).some(st=>num(st.kg)>=40&&num(st.reps)>=6))), story:"Je hip thrust ging naar 40 kg voor reps — dik 2,5× je startgewicht! De leeuw brult trots. 🦁"},
   {id:"ms_goal_weight", soort:"eenhoorn", icon:"🦄", naam:"Streefgewicht in zicht", check:()=>{const p=weightProgressPct(); return p!=null && p>=90;}, story:"Je bent vlak bij je streefgewicht — de legendarische eenhoorn arriveert! ✨"},
   {id:"ms_full_week", soort:"panda", badge:"volle_week", icon:"💯", naam:"Volle week (5/5)", check:()=>weekDoneCount()>=5, story:"Eerste volle week van 5! Panda komt je herstel bewaken. 🐼"},
   {id:"ms_streak_14", soort:"draak", icon:"🐉", naam:"14 dagen reeks", check:()=>S.game.streakDagen>=14, story:"14 dagen op rij — een legendarische reeks! De draak is van jou. 🐉"}
