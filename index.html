@@ -1985,6 +1985,13 @@ function quadInner(cfg,opts){
   else if(cfg.tail==="long") s+=`<path d="M${tx},${tyy} q-13,3 -15,-7" fill="none" stroke="${body}" stroke-width="3.4" stroke-linecap="round"/>`+(has("liontuft")?`<circle cx="${tx-15}" cy="${tyy-7}" r="3.4" fill="${cfg.maneCol||acc}"/>`:"");
   else if(cfg.tail==="stub") s+=`<circle cx="${tx-2}" cy="${tyy-1}" r="4.6" fill="${cfg.tailTip||belly}"/>`;
   else if(cfg.tail==="flat") s+=`<path d="M${tx},${tyy+2} q-15,3 -17,10 q10,2 17,-3 z" fill="${dark}"/>`;
+  if(has("ninetails")){ const tip=cfg.tailTip||"#ffffff", edge=darken(body,.13);
+    for(let i=0;i<9;i++){ const a=(150+i*12)*Math.PI/180, len=20+(i%2)*3;
+      const mx=tx+Math.cos(a)*len*0.5-3, my=tyy+Math.sin(a)*len*0.5*0.9, ex=tx+Math.cos(a)*len, ey=tyy+Math.sin(a)*len*0.9-2;
+      s+=`<path d="M${tx},${tyy} Q${mx.toFixed(1)},${my.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}" stroke="${edge}" stroke-width="6" fill="none" stroke-linecap="round" opacity=".55"/>`;
+      s+=`<path d="M${tx},${tyy} Q${mx.toFixed(1)},${my.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}" stroke="${body}" stroke-width="3.6" fill="none" stroke-linecap="round"/>`;
+      s+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="2.6" fill="${tip}"/>`;
+    } }
   // verre poten
   s+=legSVG(bCX-bodyW*0.26, groundY-legLen, legLen, 6*bsc, legCol);
   s+=legSVG(bCX+bodyW*0.30, groundY-legLen, legLen, 6*bsc, legCol);
@@ -2053,6 +2060,8 @@ function birdInner(cfg,opts){
   s+=`<path d="M45,${groundY} l6,0 M45,${groundY} l-3,2.5 M53.5,${groundY} l6,0 M53.5,${groundY} l3,2.5" stroke="${legCol}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
   const bCY=groundY-legLen-16*bsc;
   if(cfg.tail==="bird"||has("wing")) s+=`<path d="M${(50-12*bsc).toFixed(1)},${(bCY+5).toFixed(1)} l-11,-3 l3,10 z" fill="${has("phoenixtail")?(cfg.crestCol||acc):darken(body,.12)}"/>`;
+  if(has("peacocktail")){ const fcx=50, fcy=bCY+3; for(let i=0;i<9;i++){ const a=(200+i*17.5)*Math.PI/180, len=27, ex=fcx+Math.cos(a)*len, ey=fcy+Math.sin(a)*len;
+    s+=`<line x1="${fcx}" y1="${fcy.toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}" stroke="${cfg.wingCol||darken(body,.18)}" stroke-width="1.8" opacity=".85"/><circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="3.6" fill="${cfg.crestCol||'#2f7fd0'}"/><circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="2.1" fill="#ffd23a"/><circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="0.9" fill="${darken(body,.3)}"/>`; } }
   s+=`<ellipse cx="50" cy="${bCY}" rx="${(15*bsc).toFixed(1)}" ry="${(18*bsc).toFixed(1)}" fill="${body}"/>`;
   s+=`<ellipse cx="51" cy="${(bCY+4).toFixed(1)}" rx="${(9*bsc).toFixed(1)}" ry="${(12*bsc).toFixed(1)}" fill="${belly}"/>`;
   s+=`<ellipse cx="45" cy="${(bCY-6).toFixed(1)}" rx="6" ry="8" fill="#ffffff" opacity=".1"/>`;
@@ -2065,7 +2074,12 @@ function birdInner(cfg,opts){
   if(has("crest")) s+=`<path d="M${hCX-2},${(hCY-hR).toFixed(1)} q2,-9 7,-8 q-3,5 -1,9 z" fill="${cfg.crestCol||'#ffd16a'}"/>`;
   if(has("eartufts")) s+=`<path d="M${(hCX-hR*0.62).toFixed(1)},${(hCY-hR*0.72).toFixed(1)} l-1.5,-7 l4.5,4 z" fill="${cfg.crestCol||acc}"/><path d="M${(hCX+hR*0.62).toFixed(1)},${(hCY-hR*0.72).toFixed(1)} l1.5,-7 l-4.5,4 z" fill="${cfg.crestCol||acc}"/>`;
   if(has("owleyes")) s+=`<circle cx="${(hCX-hR*0.42).toFixed(1)}" cy="${(hCY-0.5).toFixed(1)}" r="${(hR*0.5).toFixed(1)}" fill="#f3ecdc"/><circle cx="${(hCX+hR*0.42).toFixed(1)}" cy="${(hCY-0.5).toFixed(1)}" r="${(hR*0.5).toFixed(1)}" fill="#f3ecdc"/><circle cx="${(hCX-hR*0.42).toFixed(1)}" cy="${(hCY-0.5).toFixed(1)}" r="2.1" fill="${eyeC}"/><circle cx="${(hCX+hR*0.42).toFixed(1)}" cy="${(hCY-0.5).toFixed(1)}" r="2.1" fill="${eyeC}"/><path d="M${(hCX-2.5).toFixed(1)},${(hCY+hR*0.28).toFixed(1)} l2.5,3 l2.5,-3 z" fill="${beakCol}"/>`;
-  if(longneck) s+=`<path d="M${(hCX+hR-1).toFixed(1)},${hCY.toFixed(1)} l10,3 l-8,4 z" fill="${beakCol}"/><path d="M${(hCX+hR+4).toFixed(1)},${(hCY+4).toFixed(1)} l4,2 l-4,1 z" fill="${darken(beakCol,.35)}"/>`;
+  if(has("toucanbeak")){ const bx=hCX+hR-3, by=hCY-3;
+    s+=`<path d="M${bx.toFixed(1)},${by.toFixed(1)} q17,-2 21,7 q-4,7 -21,3 z" fill="${beakCol}"/>`;
+    s+=`<path d="M${(bx+18).toFixed(1)},${(by+3).toFixed(1)} q4,1 4,3 q-2,3 -5,1 z" fill="${cfg.crestCol||darken(beakCol,.35)}"/>`;
+    s+=`<line x1="${(bx+1).toFixed(1)}" y1="${(by+3).toFixed(1)}" x2="${(bx+19).toFixed(1)}" y2="${(by+6).toFixed(1)}" stroke="${darken(beakCol,.2)}" stroke-width="0.7" opacity=".5"/>`;
+  }
+  else if(longneck) s+=`<path d="M${(hCX+hR-1).toFixed(1)},${hCY.toFixed(1)} l10,3 l-8,4 z" fill="${beakCol}"/><path d="M${(hCX+hR+4).toFixed(1)},${(hCY+4).toFixed(1)} l4,2 l-4,1 z" fill="${darken(beakCol,.35)}"/>`;
   else s+=`<path d="M${(hCX+hR-1).toFixed(1)},${(hCY+1).toFixed(1)} l9,2 l-8,5 z" fill="${beakCol}"/>`;
   const eX=hCX+hR*0.2, eY=hCY-1;
   if(!has("owleyes")) s+=eyeSVG(eX,eY,1.9,eyeC);
@@ -2109,6 +2123,33 @@ function fishInner(cfg,opts){
     s+=`<path d="M${sx-7},${sy-15} l-8,1 l7,4 z" fill="${body}"/>`;                            // snuit
     s+=`<path d="M${sx-2},${sy-21} l-1,-4 m3,4 l1,-4 m-2,4 l0,-5" stroke="${acc}" stroke-width="1.6" stroke-linecap="round" fill="none"/>`;   // kroontje
     s+=`<circle cx="${sx-3}" cy="${sy-16}" r="1.5" fill="#fff"/><circle cx="${sx-3}" cy="${sy-16}" r="0.9" fill="${eyeC}"/>`;
+    return `<g class="bob">${s}</g>`;
+  }
+  if(shape==="dolphin"||shape==="orca"){
+    const orca=shape==="orca", dx=44, dy=56;
+    s+=`<ellipse cx="50" cy="84" rx="20" ry="4" fill="rgba(0,0,0,.10)"/>`;
+    s+=`<path d="M${dx-19},${dy+1} q-9,-7 -13,-3 q4,3 4,6 q-4,3 0,6 q6,2 9,-4 z" fill="${fin}"/>`;                 // staartfluke
+    s+=`<path d="M${dx-18},${dy} Q${dx-6},${dy-15} ${dx+12},${dy-10} Q${dx+22},${dy-7} ${dx+24},${dy-2} Q${dx+19},${dy+6} ${dx+2},${dy+8} Q${dx-12},${dy+8} ${dx-18},${dy} Z" fill="${body}"/>`;   // lijf
+    s+=`<path d="M${dx-14},${dy+3} Q${dx+2},${dy+9} ${dx+19},${dy+2} Q${dx+4},${dy+8} ${dx-12},${dy+6} Z" fill="${belly}"/>`;
+    s+=`<path d="M${dx},${dy-12} q6,-6 11,0 q-6,-1 -9,4 z" fill="${fin}"/>`;                                       // rugvin (sikkel)
+    s+=`<path d="M${dx+3},${dy+5} q2,9 10,9 q0,-6 -5,-11 z" fill="${fin}"/>`;                                      // borstvin
+    s+=`<path d="M${dx+21},${dy-2} q7,0 9,3 q-6,3 -10,0 z" fill="${body}"/>`;                                      // snuit
+    if(orca) s+=`<ellipse cx="${dx+9}" cy="${dy-7}" rx="4" ry="2.4" fill="#f4f4f0" transform="rotate(-12 ${dx+9} ${dy-7})"/>`;   // oogvlek
+    s+=`<circle cx="${dx+15}" cy="${dy-3}" r="1.7" fill="${eyeC}"/><circle cx="${(dx+14.4).toFixed(1)}" cy="${(dy-3.6).toFixed(1)}" r="0.7" fill="#fff"/>`;
+    s+=`<path d="M${dx+18},${dy+2} q4,2 8,-0.5" stroke="${darken(body,.3)}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
+    return `<g class="bob">${s}</g>`;
+  }
+  if(shape==="whale"){
+    const wx=43, wy=57;
+    s+=`<ellipse cx="50" cy="84" rx="22" ry="4" fill="rgba(0,0,0,.10)"/>`;
+    s+=`<path d="M${wx-22},${wy} q-9,-8 -13,-4 q5,4 4,7 q-4,4 1,7 q6,2 8,-4 z" fill="${fin}"/>`;                   // fluke
+    s+=`<path d="M${wx-21},${wy} Q${wx-13},${wy-17} ${wx+8},${wy-16} Q${wx+27},${wy-14} ${wx+28},${wy+1} Q${wx+26},${wy+14} ${wx+6},${wy+15} Q${wx-13},${wy+15} ${wx-21},${wy} Z" fill="${body}"/>`;   // groot rond lijf
+    s+=`<path d="M${wx-2},${wy+4} Q${wx+14},${wy+13} ${wx+25},${wy+3} Q${wx+12},${wy+12} ${wx-4},${wy+9} Z" fill="${belly}"/>`;
+    for(let i=0;i<4;i++) s+=`<line x1="${wx+2+i*5}" y1="${wy+5}" x2="${wx+3+i*5}" y2="${wy+13}" stroke="${darken(belly,.14)}" stroke-width="0.8" opacity=".5"/>`;   // keelgroeven
+    s+=`<path d="M${wx+5},${wy+8} q2,9 11,9 q0,-7 -6,-12 z" fill="${fin}"/>`;                                      // borstvin
+    s+=`<path d="M${wx+9},${wy-16} q-2,-8 1,-11 q3,3 2,7 M${wx+9},${wy-16} q2,-6 5,-6" stroke="#bfe0f5" stroke-width="2" fill="none" stroke-linecap="round" opacity=".85"/>`;   // spuit
+    s+=`<circle cx="${wx+18}" cy="${wy-2}" r="1.8" fill="${eyeC}"/><circle cx="${(wx+17.3).toFixed(1)}" cy="${(wy-2.7).toFixed(1)}" r="0.8" fill="#fff"/>`;
+    s+=`<path d="M${wx+10},${wy+5} q8,3 16,-1" stroke="${darken(body,.28)}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
     return `<g class="bob">${s}</g>`;
   }
   const cx=46, cy=58, rx=23, ry=14;
@@ -2165,6 +2206,46 @@ function crabInner(cfg,opts){
   s+=`<circle cx="${cx-6}" cy="${cy-19}" r="2.4" fill="#fff"/><circle cx="${cx-6}" cy="${cy-19}" r="1.4" fill="${eyeC}"/><circle cx="${cx+6}" cy="${cy-19}" r="2.4" fill="#fff"/><circle cx="${cx+6}" cy="${cy-19}" r="1.4" fill="${eyeC}"/>`;
   return `<g class="bob">${s}</g>`;
 }
+function sealInner(cfg,opts){
+  const body=opts.pink?"#e088b3":cfg.body, belly=cfg.belly||lighten(body,.22), nose=cfg.nose||darken(body,.5), eyeC=cfg.eyeColor||"#1f1016";
+  const groundY=89, cx=44, cy=groundY-12;
+  let s="";
+  s+=`<ellipse cx="50" cy="${groundY+1}" rx="27" ry="4" fill="rgba(0,0,0,.15)"/>`;
+  s+=`<path d="M${cx-22},${cy+2} q-10,-3 -13,3 q5,3 3,6 q8,1 12,-4 z" fill="${darken(body,.1)}"/>`;          // staartflippers
+  s+=`<path d="M${cx-20},${cy+3} Q${cx-18},${cy-12} ${cx},${cy-13} Q${cx+20},${cy-13} ${cx+24},${cy-2} Q${cx+22},${cy+8} ${cx},${cy+9} Q${cx-16},${cy+9} ${cx-20},${cy+3} Z" fill="${body}"/>`;   // lijf
+  s+=`<ellipse cx="${cx+4}" cy="${cy+5}" rx="16" ry="5" fill="${belly}"/>`;
+  s+=`<ellipse cx="${cx-6}" cy="${cy-7}" rx="11" ry="4" fill="#fff" opacity=".1"/>`;
+  s+=`<path d="M${cx+8},${cy+5} q3,11 12,11 q1,-5 -3,-9 z" fill="${darken(body,.08)}"/>`;                     // voorflipper
+  const hCX=cx+19, hCY=cy-12, hR=11;
+  s+=`<ellipse cx="${hCX}" cy="${hCY}" rx="${hR}" ry="${hR-0.5}" fill="${body}"/>`;
+  s+=`<ellipse cx="${(hCX+hR*0.55).toFixed(1)}" cy="${(hCY+hR*0.45).toFixed(1)}" rx="6" ry="5" fill="${belly}"/>`;
+  s+=eyeSVG(hCX-1.5,hCY-1,2.7,eyeC);
+  s+=`<ellipse cx="${(hCX+5.5).toFixed(1)}" cy="${(hCY-1).toFixed(1)}" rx="2.4" ry="2.9" fill="${eyeC}"/><circle cx="${(hCX+4.8).toFixed(1)}" cy="${(hCY-1.8).toFixed(1)}" r="0.9" fill="#fff"/>`;
+  s+=`<ellipse cx="${(hCX+hR*0.85).toFixed(1)}" cy="${(hCY+hR*0.4).toFixed(1)}" rx="2.2" ry="1.8" fill="${nose}"/>`;
+  s+=`<g stroke="${darken(belly,.2)}" stroke-width="0.8" opacity=".7"><line x1="${(hCX+hR*0.5).toFixed(1)}" y1="${(hCY+hR*0.5).toFixed(1)}" x2="${(hCX+hR*1.5).toFixed(1)}" y2="${(hCY+hR*0.3).toFixed(1)}"/><line x1="${(hCX+hR*0.5).toFixed(1)}" y1="${(hCY+hR*0.72).toFixed(1)}" x2="${(hCX+hR*1.5).toFixed(1)}" y2="${(hCY+hR*0.72).toFixed(1)}"/></g>`;
+  return `<g class="bob">${s}</g>`;
+}
+function turtleInner(cfg,opts){
+  const shell=opts.pink?"#e088b3":cfg.body, plastron=cfg.belly||lighten(shell,.3), scute=cfg.accent||darken(shell,.3), skin=cfg.legCol||"#9bb36a", eyeC=cfg.eyeColor||"#1f1016";
+  const groundY=89, cx=46, cy=groundY-9;
+  let s="";
+  s+=`<ellipse cx="50" cy="${groundY+1}" rx="25" ry="4" fill="rgba(0,0,0,.15)"/>`;
+  s+=`<path d="M${cx-13},${cy+4} q-9,2 -10,9 q7,1 12,-4 z" fill="${darken(skin,.08)}"/>`;                     // achterflipper
+  s+=`<path d="M${cx-19},${cy+1} l-5,2 l4,2 z" fill="${skin}"/>`;                                            // staartje
+  const hCX=cx+19, hCY=cy;
+  s+=`<ellipse cx="${hCX}" cy="${hCY}" rx="8" ry="6.5" fill="${skin}"/>`;
+  s+=`<ellipse cx="${hCX-3}" cy="${hCY-2}" rx="3" ry="2" fill="#fff" opacity=".15"/>`;
+  s+=`<circle cx="${hCX+2}" cy="${hCY-1}" r="1.7" fill="#fff"/><circle cx="${(hCX+2.4).toFixed(1)}" cy="${(hCY-1).toFixed(1)}" r="1" fill="${eyeC}"/>`;
+  s+=`<path d="M${hCX+5},${hCY+2.5} q2,1 4,0.5" stroke="${darken(skin,.3)}" stroke-width="1" fill="none" stroke-linecap="round"/>`;
+  s+=`<path d="M${cx+4},${cy+5} q9,4 9,11 q-7,0 -12,-6 z" fill="${skin}"/>`;                                  // voorflipper
+  s+=`<ellipse cx="${cx}" cy="${cy+6}" rx="19" ry="6" fill="${plastron}"/>`;                                 // plastron
+  s+=`<path d="M${cx-19},${cy+5} a19,16 0 0 1 38,0 z" fill="${shell}"/>`;                                     // schild-dome
+  s+=`<ellipse cx="${cx-7}" cy="${cy-6}" rx="7" ry="3.5" fill="#fff" opacity=".12"/>`;
+  s+=`<path d="M${cx-19},${cy+4} a19,15 0 0 1 38,0" fill="none" stroke="${scute}" stroke-width="1.4" opacity=".5"/>`;
+  s+=`<ellipse cx="${cx}" cy="${cy-1}" rx="9" ry="7" fill="none" stroke="${scute}" stroke-width="1.3" opacity=".45"/>`;
+  s+=`<path d="M${cx},${cy-15} l0,7 M${cx-9},${cy-9} l-2,6 M${cx+9},${cy-9} l2,6 M${cx-15},${cy} l-3,4 M${cx+15},${cy} l3,4" stroke="${scute}" stroke-width="1.2" fill="none" opacity=".4"/>`;
+  return `<g class="bob">${s}</g>`;
+}
 function creatureInnerByPlan(cfg,opts){
   const plan=cfg.plan||"quad";
   if(plan==="bird") return birdInner(cfg,opts);
@@ -2172,6 +2253,8 @@ function creatureInnerByPlan(cfg,opts){
   if(plan==="fish") return fishInner(cfg,opts);
   if(plan==="butterfly") return butterflyInner(cfg,opts);
   if(plan==="crab") return crabInner(cfg,opts);
+  if(plan==="seal") return sealInner(cfg,opts);
+  if(plan==="turtle") return turtleInner(cfg,opts);
   return quadInner(cfg,opts);
 }
 function creatureSVG(cfg, opts){
@@ -2234,7 +2317,50 @@ const ANIMALS = {
   otter:{naam:"Otter", rarity:"special", prijs:2700, viaEi:false, perk:{pct:0.10,label:"+10% Pootjes op hardloopdagen"}, weetje:"Otters houden pootjes vast tijdens het slapen zodat ze niet wegdrijven. 🦦", cfg:{body:"#6f5640",belly:"#c8b49a",ear:"#5c4634",ears:"tiny",tail:"flat",extras:["whiskers","snoutpatch"],accent:"#4a382a"}},
   // ---- EVENT ----
   rendier:{naam:"Rendier", rarity:"event", prijs:900, event:"dec", viaEi:false, weetje:"Een feestelijk rendier voor de donkere dagen. 🎄", cfg:{body:"#8a6446",belly:"#d2bfa2",ear:"#6f4f36",ears:"up",tail:"stub",extras:["antlers"],hornCol:"#7a5638",accent:"#5a3e28"}},
-  zomervlinder:{naam:"Zomervlinder", rarity:"event", prijs:700, event:"jun", viaEi:false, weetje:"Fladdert binnen in de zomer. ☀️", cfg:{plan:"bird",body:"#e07faa",belly:"#f2c8da",beakCol:"#2a1620",extras:["wing"],wingCol:"#c084fc",accent:"#b85c84"}}
+  zomervlinder:{naam:"Zomervlinder", rarity:"event", prijs:700, event:"jun", viaEi:false, weetje:"Fladdert binnen in de zomer. ☀️", cfg:{plan:"bird",body:"#e07faa",belly:"#f2c8da",beakCol:"#2a1620",extras:["wing"],wingCol:"#c084fc",accent:"#b85c84"}},
+
+  // ==== NIEUWE DIEREN — golf 1 (bestaande generator) ====
+  // -- gewoon --
+  bever:{naam:"Bever", rarity:"gewoon", prijs:175, viaEi:true, prefZone:"moeras", weetje:"Een bever bouwt dammen zonder bouwtekening en z'n tanden groeien z'n leven lang door.", cfg:{body:"#7a5636",belly:"#c2a878",ear:"#624427",ears:"round",tail:"flat",extras:["snoutpatch"],nose:"#3a2c1e",accent:"#4a3220"}},
+  aapje:{naam:"Aapje", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"jungle", weetje:"Aapjes slingeren van tak naar tak en stelen graag een banaan.", cfg:{body:"#8a6a4a",belly:"#e8cba0",ear:"#6f5238",ears:"round",tail:"long",extras:["snoutpatch"],accent:"#4a3422"}},
+  gibbon:{naam:"Gibbon", rarity:"gewoon", prijs:165, viaEi:true, prefZone:"jungle", weetje:"De gibbon zingt 's ochtends de hele jungle wakker.", cfg:{body:"#6a5c52",belly:"#cdbfb0",ear:"#564a42",ears:"round",tail:"stub",extras:["longbody","snoutpatch"],accent:"#3a322c"}},
+  kaketoe:{naam:"Kaketoe", rarity:"gewoon", prijs:175, viaEi:true, prefZone:"jungle", weetje:"De kaketoe zet bij opwinding z'n grote kuif overeind en roept woordjes na.", cfg:{plan:"bird",body:"#f4f1ea",belly:"#fffdf8",beakCol:"#3a3038",extras:["crest"],crestCol:"#ffd23a",accent:"#cfc8bc"}},
+  ree:{naam:"Ree", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"bos", weetje:"Een reekalfje ligt doodstil verstopt in het hoge gras tot mama terugkomt.", cfg:{body:"#c08a52",belly:"#ecd9bc",ear:"#a8743e",ears:"up",tail:"stub",extras:["spots"],accent:"#8a6238"}},
+  stinkdier:{naam:"Stinkdier", rarity:"gewoon", prijs:160, viaEi:true, prefZone:"bos", weetje:"Een stinkdier doet eerst een handstandje als waarschuwing vóór 't z'n geurkanon afvuurt.", cfg:{body:"#2c2a30",belly:"#3a3742",ear:"#23212a",ears:"round",tail:"bush",tailTip:"#f4f4f4",extras:["stripesBody"],accent:"#f4f4f4"}},
+  sneeuwvos:{naam:"Sneeuwvos", rarity:"gewoon", prijs:180, viaEi:true, prefZone:"poolgebied", weetje:"De poolvos heeft 's winters een sneeuwwitte vacht en een staart als sjaal.", cfg:{body:"#eef1f4",belly:"#ffffff",ear:"#d6dde2",ears:"up",tail:"bush",tailTip:"#ffffff",accent:"#9fb0bc"}},
+  guppy:{naam:"Guppy", rarity:"gewoon", prijs:240, viaEi:false, prefZone:"aquarium", weetje:"Het kleine guppy-visje krijgt aan de lopende band vrolijke babyguppies.", cfg:{plan:"fish",body:"#ff7eb0",belly:"#ffd0e2",finCol:"#7fd0ee",extras:["spots"],accent:"#c2569a"}},
+  // -- zeldzaam --
+  ijsvogel:{naam:"IJsvogel", rarity:"zeldzaam", prijs:640, viaEi:true, prefZone:"moeras", weetje:"De ijsvogel schiet als een blauw-oranje flits over de beek.", cfg:{plan:"bird",body:"#1fb6c8",belly:"#ef9f4a",beakCol:"#2a2028",legCol:"#e8413a",accent:"#15808e"}},
+  ooievaar:{naam:"Ooievaar", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"moeras", weetje:"De ooievaar is een langebeen-vogel die geluk en een nieuw begin brengt.", cfg:{plan:"bird",body:"#f4f4f0",belly:"#ffffff",beakCol:"#e8413a",legCol:"#e8413a",extras:["longneck","wing"],wingCol:"#2c2a30",accent:"#cfd0cc"}},
+  luiaard:{naam:"Luiaard", rarity:"zeldzaam", prijs:720, viaEi:true, prefZone:"jungle", weetje:"De luiaard beweegt in slow-motion en is de rustigste bewoner van de zoo.", cfg:{body:"#9a8c72",belly:"#cdbfa2",ear:"#7e7058",ears:"round",tail:"stub",extras:["longbody","snoutpatch"],accent:"#5a4e3a"}},
+  gorilla:{naam:"Gorilla", rarity:"zeldzaam", prijs:880, viaEi:true, prefZone:"jungle", weetje:"De gorilla is een grote stille kracht die trots op z'n borst klopt als 'ie blij is.", cfg:{body:"#34323a",belly:"#46434d",ear:"#26242b",ears:"round",tail:"stub",nose:"#15131a",accent:"#15131a"}},
+  jaguar:{naam:"Jaguar", rarity:"zeldzaam", prijs:880, viaEi:true, prefZone:"jungle", weetje:"De jaguar sluipt door 't regenwoud en is de beste zwemmer onder de grote katten.", cfg:{body:"#e0a13e",belly:"#f3e0bc",ear:"#c2842c",ears:"cat",tail:"long",extras:["spots","whiskers"],accent:"#2a1c0e"}},
+  rodepanda:{naam:"Rode Panda", rarity:"zeldzaam", prijs:820, viaEi:true, prefZone:"jungle", weetje:"De rode panda is een vuurrode bamboe-snoeper met een geringde pluimstaart.", cfg:{body:"#c4602e",belly:"#3a2a22",ear:"#a84e22",ears:"round",tail:"bush",tailTip:"#3a2a22",extras:["snoutpatch","mask"],accent:"#8a3e18"}},
+  lynx:{naam:"Lynx", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"bos", weetje:"De lynx heeft penseeltjes op z'n oren die geluid versterken.", cfg:{body:"#caa878",belly:"#ecdcc2",ear:"#b08e58",ears:"cat",tail:"stub",extras:["spots","whiskers"],accent:"#6a543a"}},
+  everzwijn:{naam:"Everzwijn", rarity:"zeldzaam", prijs:780, viaEi:true, prefZone:"bos", weetje:"Een everzwijn ruikt voedsel tot een halve meter onder de grond.", cfg:{body:"#5a4a40",belly:"#7a6858",ear:"#463a32",ears:"up",tail:"curl",extras:["tusks","mane"],maneCol:"#3a302a",accent:"#2e2620"}},
+  chinchilla:{naam:"Chinchilla", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"bos", weetje:"De chinchilla heeft de zachtste vacht ter wereld en neemt stofbadjes.", cfg:{body:"#a9aab4",belly:"#e2e3ea",ear:"#9092a0",ears:"round",tail:"bush",extras:["whiskers"],accent:"#5e606c"}},
+  sneeuwuil:{naam:"Sneeuwuil", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"poolgebied", weetje:"De witte sneeuwuil glijdt geruisloos over de poolvlakte.", cfg:{plan:"bird",body:"#f4f5f7",belly:"#ffffff",beakCol:"#e8a23a",extras:["owleyes","eartufts"],crestCol:"#d8dde2",accent:"#cfd4da"}},
+  husky:{naam:"Husky", rarity:"zeldzaam", prijs:780, viaEi:true, prefZone:"poolgebied", weetje:"De husky is een trouwe sledehond met ijsblauwe ogen.", cfg:{body:"#8a909a",belly:"#f0f2f4",ear:"#6f757e",ears:"up",tail:"curl",eyeColor:"#5ec8e8",extras:["mask","snoutpatch"],accent:"#3a3e46"}},
+  walrus:{naam:"Walrus", rarity:"zeldzaam", prijs:840, viaEi:true, prefZone:"poolgebied", weetje:"De logge walrus heeft grote slagtanden en een echte walrussnor.", cfg:{body:"#9a7a64",belly:"#bfa48e",ear:"#7e6250",ears:"tiny",tail:"stub",extras:["tusks","whiskers"],accent:"#5e483a"}},
+  stokstaartje:{naam:"Stokstaartje", rarity:"zeldzaam", prijs:720, viaEi:true, prefZone:"savanne", weetje:"Het stokstaartje staat kaarsrecht op wacht om gevaar te speuren.", cfg:{body:"#c9aa7e",belly:"#e8d8be",ear:"#b0905e",ears:"tiny",tail:"long",extras:["mask"],accent:"#6a523a"}},
+  alpaca:{naam:"Alpaca", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"savanne", weetje:"De wollige alpaca heeft een eeuwige glimlach.", cfg:{body:"#e9ddc8",belly:"#f6efe2",ear:"#d2c2a6",ears:"up",tail:"stub",extras:["longneck"],accent:"#a8967a"}},
+  axolotl:{naam:"Axolotl", rarity:"zeldzaam", prijs:560, viaEi:false, prefZone:"aquarium", weetje:"De axolotl glimlacht altijd en groeit afgebroken pootjes gewoon weer aan.", cfg:{plan:"fish",body:"#f4a7c4",belly:"#ffd8e6",finCol:"#ff7eb0",accent:"#d06a92"}},
+  // -- legendarisch --
+  ara:{naam:"Ara", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"jungle", weetje:"De ara is de spectaculaire reuzenpapegaai van 't regenwoud in regenboogkleuren.", cfg:{plan:"bird",body:"#e8413a",belly:"#ffd23a",beakCol:"#3a3038",tail:"bird",extras:["crest","wing"],crestCol:"#2f7fd0",wingCol:"#2faa55",accent:"#b5281f"}},
+  eland:{naam:"Eland", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"bos", weetje:"De eland is 't grootste hertachtige ter wereld en zwemt moeiteloos door moerassen.", cfg:{body:"#5a4636",belly:"#7e6a56",ear:"#463628",ears:"up",tail:"stub",extras:["antlers","snoutpatch"],hornCol:"#8a6e4e",accent:"#2e2418"}},
+  ijsbeer:{naam:"IJsbeer", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"poolgebied", weetje:"De ijsbeer is de koning van 't poolgebied — enorm, sneeuwwit en zachtaardig met welpjes.", cfg:{body:"#f1efe8",belly:"#ffffff",ear:"#dcdad2",ears:"round",tail:"stub",nose:"#2e2a26",accent:"#c8c6be"}},
+  sneeuwpanter:{naam:"Sneeuwpanter", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"poolgebied", weetje:"De sneeuwpanter is een schimmige bergkat met een enorme warme staart om zich in te wikkelen.", cfg:{body:"#d2d8de",belly:"#eef1f4",ear:"#b4bcc4",ears:"cat",tail:"long",extras:["spots","whiskers"],accent:"#5a626c"}},
+  pegasus:{naam:"Pegasus", rarity:"legendarisch", prijs:3200, viaEi:true, weetje:"De pegasus is een gevleugeld wolkenpaard dat sterren achterlaat in de lucht.", cfg:{body:"#f2f4f8",belly:"#ffffff",ear:"#dde2ea",ears:"up",tail:"long",extras:["wing","forelock","liontuft"],wingCol:"#dbe6f2",maneCol:"#bcd0e6",accent:"#c2cede"}},
+
+  // ==== NIEUWE DIEREN — golf 2 (nieuw teken-werk) ====
+  toekan:{naam:"Toekan", rarity:"zeldzaam", prijs:800, viaEi:true, prefZone:"jungle", weetje:"De toekan draagt de grootste, kleurrijkste snavel van de jungle als een trots vlaggetje.", cfg:{plan:"bird",body:"#2c2a30",belly:"#f4f4f0",beakCol:"#ff9b2f",legCol:"#5a8ad0",extras:["toucanbeak"],crestCol:"#e8413a",accent:"#15131a"}},
+  zeehond:{naam:"Zeehond", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"poolgebied", weetje:"De zeehond is een knuffelig rond robbenjong met grote zwarte kraalogen.", cfg:{plan:"seal",body:"#9aa2ac",belly:"#d2d8de",nose:"#2a2e34",accent:"#5e646c"}},
+  zeeschildpad:{naam:"Zeeschildpad", rarity:"zeldzaam", prijs:820, viaEi:true, prefZone:"aquarium", weetje:"De zeeschildpad vaart kalm door 't water en wordt soms wel honderd jaar oud.", cfg:{plan:"turtle",body:"#5a8a52",belly:"#e6d6a8",legCol:"#7a9a5a",accent:"#3a5e34"}},
+  pauw:{naam:"Pauw", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"jungle", weetje:"De pauw pronkt met een waaier van honderden glinsterende oog-veren.", cfg:{plan:"bird",body:"#1f8a8a",belly:"#2fb0b0",beakCol:"#3a3038",extras:["peacocktail","crest"],crestCol:"#2f7fd0",wingCol:"#155a6a",accent:"#134a4a"}},
+  kitsune:{naam:"Kitsune", rarity:"legendarisch", prijs:3200, viaEi:true, prefZone:"bos", weetje:"De kitsune is een mythische geestenvos met negen vlammende staarten.", cfg:{body:"#f0ece4",belly:"#fffdf8",ear:"#e0d6c8",ears:"up",tail:"none",extras:["ninetails","mask"],tailTip:"#ef6a8a",maneCol:"#f0ece4",accent:"#d2546a"}},
+  dolfijn:{naam:"Dolfijn", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"aquarium", weetje:"De dolfijn springt in bogen uit 't water en is een van de slimste dieren ter wereld.", cfg:{plan:"fish",shape:"dolphin",body:"#7fa8c4",belly:"#eaf2f7",finCol:"#5f88a4",accent:"#3a5e74"}},
+  walvis:{naam:"Walvis", rarity:"legendarisch", prijs:1700, viaEi:true, prefZone:"aquarium", weetje:"De bultrugwalvis is 't grootste dier dat ooit leefde en zingt liederen die kilometers ver dragen.", cfg:{plan:"fish",shape:"whale",body:"#5a7a9a",belly:"#cdd9e2",finCol:"#44607c",accent:"#2e4a64"}},
+  orka:{naam:"Orka", rarity:"legendarisch", prijs:1700, viaEi:true, prefZone:"aquarium", weetje:"De orka is een imposante zwart-witte zwemmer — eigenlijk de grootste dolfijn ter wereld.", cfg:{plan:"fish",shape:"orca",body:"#22272e",belly:"#f4f4f0",finCol:"#15191e",accent:"#0e1216"}}
 };
 const ANIMAL_IDS = Object.keys(ANIMALS);
 const RARITY_ORDER = {gewoon:0, zeldzaam:1, legendarisch:2, special:3, event:4};
@@ -2380,6 +2506,17 @@ function creatureMiniIcon(cfg){
     const hx=longneck?27:26, hy=longneck?4:9;
     if(longneck) s+=`<path d="M22,11 q-4,-5 1,-8 q4,-2 4,-2" stroke="${body}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
     s+=`<circle cx="${hx}" cy="${hy}" r="4.6" fill="${body}"/><path d="M${hx+4},${hy} l5,1.5 l-5,2 z" fill="${beak}"/><circle cx="${hx+1}" cy="${hy-1}" r="0.9" fill="#1f1016"/>`;
+  } else if(plan==="seal"){
+    s+=`<path d="M4,19 q-3,-1 -4,2 q3,2 5,0 z" fill="${dark}"/>`;
+    s+=`<ellipse cx="16" cy="20" rx="13" ry="7" fill="${body}"/><ellipse cx="18" cy="22" rx="8" ry="3.4" fill="${belly}"/>`;
+    s+=`<circle cx="28" cy="13" r="5.6" fill="${body}"/>`;
+    s+=`<circle cx="29.6" cy="12" r="1.2" fill="#1f1016"/><circle cx="26.4" cy="12.6" r="1.1" fill="#1f1016"/><circle cx="31.5" cy="14" r="0.9" fill="${cfg.nose||darken(body,.5)}"/>`;
+  } else if(plan==="turtle"){
+    const skin=cfg.legCol||"#9bb36a", scute=cfg.accent||darken(body,.3);
+    s+=`<ellipse cx="18" cy="24" rx="12" ry="3.4" fill="${cfg.belly||lighten(body,.3)}"/>`;
+    s+=`<path d="M9,25 l-2,3 M25,25 l2,3" stroke="${skin}" stroke-width="2" stroke-linecap="round"/>`;
+    s+=`<circle cx="31" cy="20" r="3.4" fill="${skin}"/><circle cx="32" cy="19.5" r="0.9" fill="#1f1016"/>`;
+    s+=`<path d="M7,23 a11,9 0 0 1 22,0 z" fill="${body}"/><path d="M7,22 a11,8 0 0 1 22,0" fill="none" stroke="${scute}" stroke-width="1" opacity=".5"/>`;
   } else {
     const panda=(cfg.extras||[]).indexOf("panda")>=0, legc=panda?acc:dark;
     s+=`<rect x="11" y="19" width="2.4" height="8" rx="1.2" fill="${legc}"/><rect x="24" y="19" width="2.4" height="8" rx="1.2" fill="${legc}"/>`;
@@ -2497,7 +2634,7 @@ function gameAfterProtein(rec){
 /* ---- stappen → eieren (web: handmatig + Apple Shortcut-URL-brug) ---- */
 const HATCH_STEPS = 20000;                                // stappen om 1 ei uit te broeden (eieren verdien je met trainingen)
 const STEP_POOTJES_BLOCK = 2000, STEP_POOTJES_AMT = 15;   // 15 Pootjes per 2000 stappen
-const SESSIONS_PER_EGG = 3;                               // 3 trainingen = 1 ei
+const SESSIONS_PER_EGG = 2;                               // 2 trainingen = 1 ei
 function ensureStepsState(){ if(!S.steps) S.steps={}; }
 function stepsToday(){ ensureStepsState(); return (S.steps[todayISO()]||{}).steps||0; }
 function stepTarget(){ const v=S.profile.stappenDoel; return (v && v>0)? v : 10000; }
