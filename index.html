@@ -467,7 +467,7 @@ footer.foot{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);fo
    BBB — STATE & STORAGE  (fase 1)
    ============================================================ */
 const STORE_KEY = "bbb_v1";
-const APP_VERSION = 1;
+const APP_VERSION = 2;
 
 /* Tijdzone-veilig: alle ISO-datums uit lokale componenten, nooit via UTC (toISOString),
    anders rolt lokale middernacht in negatieve tijdzones een dag terug. */
@@ -555,7 +555,12 @@ function deepDefaults(obj, def){
 function migrate(d){
   // versie-gestuurde schema-migraties — vangnet voor toekomstige hernoemingen/typewijzigingen
   let v = d.v || 0;
-  // if(v < 2){ /* verbouw d naar schema v2 */ }
+  if(v < 2){
+    // klasje-systeem: oude HIIT-slots (sub "klas", label "HIIT-les"/"HIIT-klasje") → nieuw sub "hiit", label "HIIT"
+    if(d.week && Array.isArray(d.week.slots)){
+      d.week.slots.forEach(sl=>{ if(sl && sl.kind==="hiit" && sl.sub==="klas"){ sl.sub="hiit"; sl.label="HIIT"; } });
+    }
+  }
   // if(v < 3){ /* ... */ }
   d.v = APP_VERSION;
   return d;
@@ -987,10 +992,18 @@ const DEFAULT_TEMPLATES = {
 };
 function getTemplates(){ return S.templates || DEFAULT_TEMPLATES; }
 const RUN_TYPES = {
-  rustig:{label:"Rustig", icon:"🌿", note:"Zone 2, lekker babbeltempo."},
-  lang:{label:"Lang", icon:"🛤️", note:"Iets langer dan rustig, rustig tempo."},
-  interval:{label:"Interval", icon:"⚡", note:"bv. 5× 1 min vlot met joggen ertussen."},
-  tempo:{label:"Tempo", icon:"🚀", note:"Een aangehouden steviger blok."}
+  kort:{label:"Kort", slot:"Korte loop", icon:"⏱️", note:"Korte, makkelijke loop."},
+  rustig:{label:"Rustig", slot:"Rustige loop", icon:"🌿", note:"Zone 2, lekker babbeltempo."},
+  lang:{label:"Lang", slot:"Lange loop", icon:"🛤️", note:"Iets langer dan rustig, rustig tempo."},
+  interval:{label:"Interval", slot:"Intervalloop", icon:"⚡", note:"bv. 5× 1 min vlot met joggen ertussen."},
+  tempo:{label:"Tempo", slot:"Tempoloop", icon:"🚀", note:"Een aangehouden steviger blok."}
+};
+const RUN_MENU = ["kort","lang","tempo"];                  // loop-types in het keuzemenu
+const CLASS_SUBS = {                                        // klasje-types — loggen als 'hiit'-sessie (zelfde logger)
+  hiit:{label:"HIIT", icon:"🔥", intens:"hoog"},
+  rocycle:{label:"Rocycle", icon:"🚴‍♀️", intens:"hoog"},
+  yoga:{label:"Yoga", icon:"🧘‍♀️", intens:"laag"},
+  anders:{label:"Anders", icon:"✨", intens:"matig"}
 };
 
 /* ============================================================
@@ -1049,9 +1062,9 @@ function defaultProposal(monday){
     slots: [
       newSlot("gym","bootyA","Booty A","gym"),
       newSlot("gym","bootyB","Booty B","gym"),
-      newSlot("run","rustig","Rustige duurloop","hardlopen"),
-      newSlot("run","lang","Langere duurloop","hardlopen"),
-      newSlot("hiit","klas","HIIT-klasje","hiit")
+      newSlot("run","kort","Korte loop","hardlopen"),
+      newSlot("run","lang","Lange loop","hardlopen"),
+      newSlot("hiit","hiit","HIIT","hiit")
     ],
     uitleg: [],   // engine vult dit in fase 3 (wat aangepast en waarom)
     deload: false
@@ -1145,10 +1158,13 @@ function slotCard(slot,i){
   const isDone=slot.status==="done";
   const sess=isDone? S.sessions.find(s=>s.id===slot.sessionId):null;
   const grad=TYPE_GRAD[slot.type]||["#ff85b8","#ff4d97"];
+  const cls = slot.kind==="hiit" ? (CLASS_SUBS[slot.sub]||CLASS_SUBS.hiit) : null;
+  const slotIcon = cls ? cls.icon : TYPE_ICON[slot.type];
+  const slotCat  = cls ? "Klasje" : TYPE_LABEL[slot.type];
   let advText="";
   if(slot.kind==="run"){ advText=`Advies: ~${fmt(adv.km,1)} km ${RUN_TYPES[adv.type]?.label?.toLowerCase()||""}`; }
   else if(slot.kind==="gym"){ advText=getTemplates()[slotTemplateId(slot)].oef.length+" oefeningen · advies klaar"; }
-  else advText="Vrij klasje — log type, duur, RPE";
+  else advText=`${cls.label} — log type, duur, RPE`;
   let doneMeta="";
   if(sess){
     if(sess.type==="gym") doneMeta=`${sess.oefeningen?.length||0} oef. · ${sess.duur||"—"}′ · ${sessLoad(sess)} pt`;
@@ -1166,8 +1182,8 @@ function slotCard(slot,i){
       <div style="width:4px;align-self:stretch;border-radius:3px;background:linear-gradient(180deg,${grad[0]},${grad[1]});flex-shrink:0"></div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:15px;font-weight:700">${TYPE_ICON[slot.type]} ${esc(slot.label)}</span>
-          ${isDone?`<span class="chip mint">✓ gedaan</span>`:`<span class="chip mut">${TYPE_LABEL[slot.type]}</span>`}
+          <span style="font-size:15px;font-weight:700">${slotIcon} ${esc(slot.label)}</span>
+          ${isDone?`<span class="chip mint">✓ gedaan</span>`:`<span class="chip mut">${slotCat}</span>`}
           ${slot.dag!=null&&!isDone?`<span class="chip pink">${DAGEN_LANG[slot.dag]}</span>`:""}
         </div>
         <div class="cardsub" style="margin:4px 0 0">${isDone?doneMeta:advText}</div>
@@ -1195,26 +1211,40 @@ function extraRow(s){
 function assignDay(slotId, di){ const s=S.week.slots.find(x=>x.id===slotId); if(!s)return; s.dag=di; save(); renderSlotList(); }
 function addSlot(){
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>Extra slot 🌟</h2>
-    <div class="msub">Kies wat voor sessie je toevoegt aan je week.</div>
+    <div class="msub">Wat voor sessie voeg je toe?</div>
     <div style="display:flex;flex-direction:column;gap:9px">
-      <button class="btn block" onclick="reallyAddSlot('gym','upper')">🏋️‍♀️ Gym — Upperbody</button>
-      <button class="btn block" onclick="reallyAddSlot('gym','bootyA')">🍑 Gym — Booty A</button>
-      <button class="btn block" onclick="reallyAddSlot('run','rustig')">🏃‍♀️ Hardlopen — Rustig</button>
-      <button class="btn block" onclick="reallyAddSlot('hiit','klas')">🔥 HIIT-klasje</button>
+      <button class="btn block" onclick="addSlotSub('gym')">🏋️‍♀️ Gym</button>
+      <button class="btn block" onclick="addSlotSub('run')">🏃‍♀️ Hardlopen</button>
+      <button class="btn block" onclick="addSlotSub('hiit')">🔥 Klasje</button>
     </div>`);
 }
+function addSlotSub(kind){
+  let opts="", titel="";
+  if(kind==="gym"){ titel="🏋️‍♀️ Gym";
+    opts=Object.keys(GYM_SUBS).map(k=>`<button class="btn block" onclick="reallyAddSlot('gym','${k}')">${k==="upper"?"🏋️‍♀️":"🍑"} ${GYM_SUBS[k]}</button>`).join(""); }
+  else if(kind==="run"){ titel="🏃‍♀️ Hardlopen";
+    opts=RUN_MENU.map(k=>`<button class="btn block" onclick="reallyAddSlot('run','${k}')">${RUN_TYPES[k].icon} ${RUN_TYPES[k].label}</button>`).join(""); }
+  else { titel="🔥 Klasje";
+    opts=Object.keys(CLASS_SUBS).map(k=>`<button class="btn block" onclick="reallyAddSlot('hiit','${k}')">${CLASS_SUBS[k].icon} ${CLASS_SUBS[k].label}</button>`).join(""); }
+  openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>${titel}</h2>
+    <div class="msub">Kies het type.</div>
+    <div style="display:flex;flex-direction:column;gap:9px">${opts}
+      <button class="btn block ghost" onclick="addSlot()">← Terug</button></div>`);
+}
 function reallyAddSlot(kind,sub){
-  const labels={bootyA:"Booty A",bootyB:"Booty B",upper:"Upperbody",rustig:"Rustige duurloop",lang:"Langere duurloop",klas:"HIIT-klasje"};
-  const type=kind==="gym"?"gym":kind==="run"?"hardlopen":"hiit";
-  S.week.slots.push(newSlot(kind,sub,labels[sub]||"Sessie",type));
+  let label, type;
+  if(kind==="gym"){ label=GYM_SUBS[sub]||"Gym"; type="gym"; }
+  else if(kind==="run"){ label=(RUN_TYPES[sub]||{}).slot||"Duurloop"; type="hardlopen"; }
+  else { label=(CLASS_SUBS[sub]||CLASS_SUBS.hiit).label; type="hiit"; }
+  S.week.slots.push(newSlot(kind,sub,label,type));
   save(); closeModal(); renderSlotList();
 }
 function swapSlot(slotId){
   const slot=S.week.slots.find(x=>x.id===slotId); if(!slot)return;
   let opts="";
   if(slot.kind==="gym") opts=Object.keys(GYM_SUBS).map(k=>`<button class="btn block ${slot.sub===k?'':'ghost'}" onclick="doSwap('${slotId}','gym','${k}','${GYM_SUBS[k]}')">${GYM_SUBS[k]}</button>`).join("");
-  else if(slot.kind==="run") opts=Object.keys(RUN_TYPES).map(k=>`<button class="btn block ${slot.sub===k?'':'ghost'}" onclick="doSwap('${slotId}','run','${k}','${RUN_TYPES[k].label} duurloop')">${RUN_TYPES[k].icon} ${RUN_TYPES[k].label}</button>`).join("");
-  else opts=`<button class="btn block" onclick="doSwap('${slotId}','hiit','klas','HIIT-klasje')">🔥 HIIT-klasje</button>`;
+  else if(slot.kind==="run") opts=RUN_MENU.map(k=>`<button class="btn block ${slot.sub===k?'':'ghost'}" onclick="doSwap('${slotId}','run','${k}','${RUN_TYPES[k].slot}')">${RUN_TYPES[k].icon} ${RUN_TYPES[k].label}</button>`).join("");
+  else opts=Object.keys(CLASS_SUBS).map(k=>`<button class="btn block ${slot.sub===k?'':'ghost'}" onclick="doSwap('${slotId}','hiit','${k}','${CLASS_SUBS[k].label}')">${CLASS_SUBS[k].icon} ${CLASS_SUBS[k].label}</button>`).join("");
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>Wissel deze sessie</h2>
     <div class="msub">Kies wat je in dit slot wil doen. De rest van je week blijft staan.</div>
     <div style="display:flex;flex-direction:column;gap:9px">${opts}
@@ -1513,12 +1543,13 @@ function saveRunSession(){
    ============================================================ */
 function openHiitLogger(slotId){
   const slot=slotId? S.week.slots.find(x=>x.id===slotId):null;
+  const sub=(slot&&slot.sub)||"hiit", cls=CLASS_SUBS[sub]||CLASS_SUBS.hiit;
   const existing = slot && slot.sessionId ? S.sessions.find(s=>s.id===slot.sessionId):null;
   LOGGER={ type:"hiit", slotId, sessionId: existing?existing.id:null, datum:existing?existing.datum:todayISO(),
-    intensiteit:existing?existing.intensiteit:"hoog",
+    intensiteit:existing?existing.intensiteit:(cls.intens||"hoog"), classLabel:cls.label,
     rec: existing?{vermoeidheid:existing.vermoeidheid,spierpijn:existing.spierpijn,slaapuren:existing.slaapuren,slaapkw:existing.slaapkw,stemming:existing.stemming,garmin:existing.garmin,opm:existing.opm}:{},
     omschrijving:existing?existing.omschrijving:"", duur:existing?existing.duur:"", rpe:existing?existing.rpe:"" };
-  openModal(`${logHeader("🔥 HIIT loggen","Een klasje is altijd anders — beschrijf gewoon wat je deed.","lg_datum",LOGGER.datum)}
+  openModal(`${logHeader(`${cls.icon} ${cls.label} loggen`,"Beschrijf kort wat je deed — type, duur, RPE.","lg_datum",LOGGER.datum)}
     <div class="frow c1"><div class="field"><label>Type / omschrijving</label><input id="lg_oms" value="${esc(LOGGER.omschrijving)}" placeholder="bv. bootcamp, spinning, bodypump…"></div></div>
     <div class="frow c2">
       <div class="field"><label>Duur (min)</label><input id="lg_duur" type="number" value="${LOGGER.duur??""}" placeholder="bv. 45"></div>
@@ -1535,7 +1566,7 @@ function saveHiitSession(){
   const duur=num(el("lg_duur").value);
   if(!duur){ toast("🤔","Vul de duur in."); return; }
   const sess={ id:LOGGER.sessionId||uid("s"), type:"hiit", datum:el("lg_datum").value, slot:LOGGER.slotId,
-    omschrijving:el("lg_oms").value.trim()||"HIIT-klasje", duur, rpe:el("lg_rpe").value||"",
+    omschrijving:el("lg_oms").value.trim()||LOGGER.classLabel||"Klasje", duur, rpe:el("lg_rpe").value||"",
     intensiteit:LOGGER.intensiteit||"hoog", ...readRecovery(), created:nowMs() };
   commitSession(sess, LOGGER.sessionId, LOGGER.slotId); closeModal();
 }
@@ -1884,6 +1915,7 @@ function adviseExercise(exId, tdef){
 /* ---- slot-advies (hardlopen/gym/hiit) ---- */
 function engineSlotAdvies(slot){
   if(slot.kind==="run"){
+    if(isNum(slot.aiKm)) return {km:slot.aiKm, type:slot.aiSub||slot.sub, note:(slot.aiReason?slot.aiReason+" ":"")+"— voorstel van je coach 🤖"};
     const longest=longestRun();
     const deload = S.week && S.week.deload;
     if(slot.sub==="lang"){
@@ -1897,7 +1929,7 @@ function engineSlotAdvies(slot){
     if(slot.sub==="tempo") return {km:5, type:"tempo", note:"Inlopen + aangehouden steviger blok van ~10 min + uitlopen."};
   }
   if(slot.kind==="gym") return {note: getTemplates()[slotTemplateId(slot)].oef.length+" oefeningen · advies per set in de logger"};
-  if(slot.kind==="hiit") return {note:"Vrij klasje — altijd anders. Log type, duur, RPE."};
+  if(slot.kind==="hiit") return {note: slot.aiFocus ? `Focus: ${slot.aiFocus} 🤖 — log type, duur, RPE.` : "Vrij klasje — altijd anders. Log type, duur, RPE."};
   return {note:""};
 }
 
@@ -2272,10 +2304,10 @@ function creatureSVG(cfg, opts){
    ============================================================ */
 const ANIMALS = {
   // ---- GEWOON ----
-  konijn:{naam:"Konijn", rarity:"gewoon", prijs:140, viaEi:true, weetje:"Konijntjes maken vreugdesprongetjes die 'binky' heten.", cfg:{body:"#b8a99b",belly:"#eee7dd",ear:"#a89a8c",ears:"bunny",tail:"stub",tailTip:"#eee7dd",accent:"#6f6256"}},
+  konijn:{naam:"Konijn", rarity:"gewoon", prijs:140, viaEi:true, weetje:"Konijnen maken vreugdesprongen die 'binky' heten.", cfg:{body:"#b8a99b",belly:"#eee7dd",ear:"#a89a8c",ears:"bunny",tail:"stub",tailTip:"#eee7dd",accent:"#6f6256"}},
   kat:{naam:"Kat", rarity:"gewoon", prijs:160, viaEi:true, weetje:"Een spinnende kat trilt op een frequentie die heling stimuleert.", cfg:{body:"#9a8d80",belly:"#cfc6bc",ear:"#897c70",ears:"cat",tail:"curl",extras:["whiskers"],accent:"#5c5046"}},
-  eend:{naam:"Eend", rarity:"gewoon", prijs:150, viaEi:true, weetje:"Eenden hebben waterdichte veren dankzij een speciaal olietje.", cfg:{plan:"bird",body:"#a98a5a",belly:"#e6dcc4",beakCol:"#e8a23a",legCol:"#e8a23a",accent:"#6a5430"}},
-  muis:{naam:"Muis", rarity:"gewoon", prijs:120, viaEi:true, weetje:"Muizen kunnen door een gaatje zo groot als een pen.", cfg:{body:"#a59c94",belly:"#d8d2cc",ear:"#988f86",ears:"round",tail:"long",nose:"#4a4038",accent:"#6a625a"}},
+  eend:{naam:"Eend", rarity:"gewoon", prijs:150, viaEi:true, weetje:"Eenden hebben waterdichte veren dankzij een speciale olie.", cfg:{plan:"bird",body:"#a98a5a",belly:"#e6dcc4",beakCol:"#e8a23a",legCol:"#e8a23a",accent:"#6a5430"}},
+  muis:{naam:"Muis", rarity:"gewoon", prijs:120, viaEi:true, weetje:"Muizen kunnen door een gat zo groot als een pen.", cfg:{body:"#a59c94",belly:"#d8d2cc",ear:"#988f86",ears:"round",tail:"long",nose:"#4a4038",accent:"#6a625a"}},
   kuiken:{naam:"Kuiken", rarity:"gewoon", prijs:130, viaEi:true, weetje:"Kuikens praten al met hun moeder vóór ze uit het ei komen.", cfg:{plan:"bird",body:"#f1cf4a",belly:"#ffe79a",beakCol:"#ef9f2e",legCol:"#ef9f2e",accent:"#c79a1e"}},
   egel:{naam:"Egel", rarity:"gewoon", prijs:170, viaEi:true, weetje:"Een egel heeft zo'n 7.000 stekels.", cfg:{body:"#9a8268",belly:"#d8c8b2",ear:"#83705a",ears:"tiny",tail:"none",extras:["quills"],accent:"#5a4632"}},
   eekhoorn:{naam:"Eekhoorn", rarity:"gewoon", prijs:165, viaEi:true, weetje:"Een eekhoorn vergeet waar 'ie z'n nootjes verstopt — en plant zo hele bossen.", cfg:{body:"#b06a38",belly:"#ecdcc6",ear:"#965426",ears:"up",tail:"bush",tailTip:"#ecdcc6",accent:"#6a3c1e"}},
@@ -2327,13 +2359,13 @@ const ANIMALS = {
   // ==== NIEUWE DIEREN — golf 1 (bestaande generator) ====
   // -- gewoon --
   bever:{naam:"Bever", rarity:"gewoon", prijs:175, viaEi:true, prefZone:"moeras", weetje:"Een bever bouwt dammen zonder bouwtekening en z'n tanden groeien z'n leven lang door.", cfg:{body:"#7a5636",belly:"#c2a878",ear:"#624427",ears:"round",tail:"flat",extras:["snoutpatch"],nose:"#3a2c1e",accent:"#4a3220"}},
-  aapje:{naam:"Aapje", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"jungle", weetje:"Aapjes slingeren van tak naar tak en stelen graag een banaan.", cfg:{body:"#8a6a4a",belly:"#e8cba0",ear:"#6f5238",ears:"round",tail:"long",extras:["snoutpatch"],accent:"#4a3422"}},
+  aapje:{naam:"Aapje", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"jungle", weetje:"Apen slingeren van tak naar tak en stelen graag een banaan.", cfg:{body:"#8a6a4a",belly:"#e8cba0",ear:"#6f5238",ears:"round",tail:"long",extras:["snoutpatch"],accent:"#4a3422"}},
   gibbon:{naam:"Gibbon", rarity:"gewoon", prijs:165, viaEi:true, prefZone:"jungle", weetje:"De gibbon zingt 's ochtends de hele jungle wakker.", cfg:{body:"#6a5c52",belly:"#cdbfb0",ear:"#564a42",ears:"round",tail:"stub",extras:["longbody","snoutpatch"],accent:"#3a322c"}},
   kaketoe:{naam:"Kaketoe", rarity:"gewoon", prijs:175, viaEi:true, prefZone:"jungle", weetje:"De kaketoe zet bij opwinding z'n grote kuif overeind en roept woordjes na.", cfg:{plan:"bird",body:"#f4f1ea",belly:"#fffdf8",beakCol:"#3a3038",extras:["crest"],crestCol:"#ffd23a",accent:"#cfc8bc"}},
   ree:{naam:"Ree", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"bos", weetje:"Een reekalfje ligt doodstil verstopt in het hoge gras tot mama terugkomt.", cfg:{body:"#c08a52",belly:"#ecd9bc",ear:"#a8743e",ears:"up",tail:"stub",extras:["spots"],accent:"#8a6238"}},
-  stinkdier:{naam:"Stinkdier", rarity:"gewoon", prijs:160, viaEi:true, prefZone:"bos", weetje:"Een stinkdier doet eerst een handstandje als waarschuwing vóór 't z'n geurkanon afvuurt.", cfg:{body:"#2c2a30",belly:"#3a3742",ear:"#23212a",ears:"round",tail:"bush",tailTip:"#f4f4f4",extras:["stripesBody"],accent:"#f4f4f4"}},
+  stinkdier:{naam:"Stinkdier", rarity:"gewoon", prijs:160, viaEi:true, prefZone:"bos", weetje:"Een stinkdier doet eerst een handstand als waarschuwing vóór 't z'n geurkanon afvuurt.", cfg:{body:"#2c2a30",belly:"#3a3742",ear:"#23212a",ears:"round",tail:"bush",tailTip:"#f4f4f4",extras:["stripesBody"],accent:"#f4f4f4"}},
   sneeuwvos:{naam:"Sneeuwvos", rarity:"gewoon", prijs:180, viaEi:true, prefZone:"poolgebied", weetje:"De poolvos heeft 's winters een sneeuwwitte vacht en een staart als sjaal.", cfg:{body:"#eef1f4",belly:"#ffffff",ear:"#d6dde2",ears:"up",tail:"bush",tailTip:"#ffffff",accent:"#9fb0bc"}},
-  guppy:{naam:"Guppy", rarity:"gewoon", prijs:240, viaEi:false, prefZone:"aquarium", weetje:"Het kleine guppy-visje krijgt aan de lopende band vrolijke babyguppies.", cfg:{plan:"fish",body:"#ff7eb0",belly:"#ffd0e2",finCol:"#7fd0ee",extras:["spots"],accent:"#c2569a"}},
+  guppy:{naam:"Guppy", rarity:"gewoon", prijs:240, viaEi:false, prefZone:"aquarium", weetje:"De kleine guppy krijgt aan de lopende band vrolijke babyguppies.", cfg:{plan:"fish",body:"#ff7eb0",belly:"#ffd0e2",finCol:"#7fd0ee",extras:["spots"],accent:"#c2569a"}},
   // -- zeldzaam --
   ijsvogel:{naam:"IJsvogel", rarity:"zeldzaam", prijs:640, viaEi:true, prefZone:"moeras", weetje:"De ijsvogel schiet als een blauw-oranje flits over de beek.", cfg:{plan:"bird",body:"#1fb6c8",belly:"#ef9f4a",beakCol:"#2a2028",legCol:"#e8413a",accent:"#15808e"}},
   ooievaar:{naam:"Ooievaar", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"moeras", weetje:"De ooievaar is een langebeen-vogel die geluk en een nieuw begin brengt.", cfg:{plan:"bird",body:"#f4f4f0",belly:"#ffffff",beakCol:"#e8413a",legCol:"#e8413a",extras:["longneck","wing"],wingCol:"#2c2a30",accent:"#cfd0cc"}},
@@ -2358,7 +2390,7 @@ const ANIMALS = {
   pegasus:{naam:"Pegasus", rarity:"legendarisch", prijs:3200, viaEi:true, weetje:"De pegasus is een gevleugeld wolkenpaard dat sterren achterlaat in de lucht.", cfg:{body:"#f2f4f8",belly:"#ffffff",ear:"#dde2ea",ears:"up",tail:"long",extras:["wing","forelock","liontuft"],wingCol:"#dbe6f2",maneCol:"#bcd0e6",accent:"#c2cede"}},
 
   // ==== NIEUWE DIEREN — golf 2 (nieuw teken-werk) ====
-  toekan:{naam:"Toekan", rarity:"zeldzaam", prijs:800, viaEi:true, prefZone:"jungle", weetje:"De toekan draagt de grootste, kleurrijkste snavel van de jungle als een trots vlaggetje.", cfg:{plan:"bird",body:"#2c2a30",belly:"#f4f4f0",beakCol:"#ff9b2f",legCol:"#5a8ad0",extras:["toucanbeak"],crestCol:"#e8413a",accent:"#15131a"}},
+  toekan:{naam:"Toekan", rarity:"zeldzaam", prijs:800, viaEi:true, prefZone:"jungle", weetje:"De toekan draagt de grootste, kleurrijkste snavel van de jungle als een trotse vlag.", cfg:{plan:"bird",body:"#2c2a30",belly:"#f4f4f0",beakCol:"#ff9b2f",legCol:"#5a8ad0",extras:["toucanbeak"],crestCol:"#e8413a",accent:"#15131a"}},
   zeehond:{naam:"Zeehond", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"poolgebied", weetje:"De zeehond is een knuffelig rond robbenjong met grote zwarte kraalogen.", cfg:{plan:"seal",body:"#9aa2ac",belly:"#d2d8de",nose:"#2a2e34",accent:"#5e646c"}},
   zeeschildpad:{naam:"Zeeschildpad", rarity:"zeldzaam", prijs:820, viaEi:true, prefZone:"aquarium", weetje:"De zeeschildpad vaart kalm door 't water en wordt soms wel honderd jaar oud.", cfg:{plan:"turtle",body:"#5a8a52",belly:"#e6d6a8",legCol:"#7a9a5a",accent:"#3a5e34"}},
   pauw:{naam:"Pauw", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"jungle", weetje:"De pauw pronkt met een waaier van honderden glinsterende oog-veren.", cfg:{plan:"bird",body:"#1f8a8a",belly:"#2fb0b0",beakCol:"#3a3038",extras:["peacocktail","crest"],crestCol:"#2f7fd0",wingCol:"#155a6a",accent:"#134a4a"}},
@@ -2386,10 +2418,10 @@ const FACILITIES = {
   voederbak:{glyph:"🍽️", naam:"Voederbak", prijs:240, boost:"blijheid", uitleg:"Blije dieren"},
   schuilhut:{glyph:"🛖", naam:"Schuilhut", prijs:300, boost:"score", uitleg:"Hogere zoo-score"},
   infobord: {glyph:"🪧", naam:"Infobord", prijs:160, boost:"bezoekers", uitleg:"Meer bezoekers"},
-  bankje:   {glyph:"🪑", naam:"Bezoekersbankje", prijs:180, boost:"bezoekers", uitleg:"Meer bezoekers"},
+  bankje:   {glyph:"🪑", naam:"Bezoekersbank", prijs:180, boost:"bezoekers", uitleg:"Meer bezoekers"},
   // kraampjes langs het pad (park-infrastructuur)
-  eetkraam:  {glyph:"🌭", naam:"Eetkraampje", prijs:300, boost:"bezoekers", uitleg:"Meer bezoekers", onPath:true},
-  drinkkraam:{glyph:"🥤", naam:"Drankkraampje", prijs:260, boost:"bezoekers", uitleg:"Meer bezoekers", onPath:true},
+  eetkraam:  {glyph:"🌭", naam:"Eetkraam", prijs:300, boost:"bezoekers", uitleg:"Meer bezoekers", onPath:true},
+  drinkkraam:{glyph:"🥤", naam:"Drankkraam", prijs:260, boost:"bezoekers", uitleg:"Meer bezoekers", onPath:true},
   ijskraam:  {glyph:"🍦", naam:"IJssalon", prijs:340, boost:"bezoekers", uitleg:"Veel meer bezoekers", onPath:true},
   toilet:    {glyph:"🚻", naam:"Toiletten", prijs:200, boost:"bezoekers", uitleg:"Meer bezoekers", onPath:true}
 };
@@ -2397,7 +2429,7 @@ const DECOS = {
   boom:{emoji:"🌳",prijs:90,naam:"Boom"}, palm:{emoji:"🌴",prijs:110,naam:"Palmboom"}, bloem:{emoji:"🌸",prijs:60,naam:"Bloemen"},
   struik:{emoji:"🌿",prijs:50,naam:"Struik"}, rots:{emoji:"🪨",prijs:70,naam:"Rots"}, ballon:{emoji:"🎈",prijs:120,naam:"Ballon"},
   bankje:{emoji:"🪑",prijs:140,naam:"Bankje"}, fontein:{emoji:"⛲",prijs:320,naam:"Fontein"}, regenboog:{emoji:"🌈",prijs:400,naam:"Regenboog"},
-  vlag:{emoji:"🚩",prijs:80,naam:"Vlaggetje"}, paddenstoel:{emoji:"🍄",prijs:90,naam:"Paddenstoel"}, hartje:{emoji:"💗",prijs:100,naam:"Hartje"}
+  vlag:{emoji:"🚩",prijs:80,naam:"Vlag"}, paddenstoel:{emoji:"🍄",prijs:90,naam:"Paddenstoel"}, hartje:{emoji:"💗",prijs:100,naam:"Hart"}
 };
 
 /* mijlpaal-unlocks: echte doelen → speciaal dier + feest */
@@ -2789,7 +2821,7 @@ function openStepLogger(){
   const openUrl = isNative ? "bbb://steps?steps=[Resultaat]" : (((location.origin && location.origin!=="null") ? location.origin+location.pathname : "https://<jouw-app-url>")+"?steps=[Resultaat]");
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
     <h2>👟 Stappen</h2>
-    <div class="msub">Je stappen <b>broeden je eieren uit</b> — elke ${fmt(HATCH_STEPS)} stappen komt er eentje uit (eieren verdien je met ${SESSIONS_PER_EGG} trainingen). En je krijgt ${STEP_POOTJES_AMT} Pootjes per ${fmt(STEP_POOTJES_BLOCK)} stappen. 🐾</div>
+    <div class="msub">Je stappen <b>broeden je eieren uit</b> — elke ${fmt(HATCH_STEPS)} stappen komt er een uit (eieren verdien je met ${SESSIONS_PER_EGG} trainingen). En je krijgt ${STEP_POOTJES_AMT} Pootjes per ${fmt(STEP_POOTJES_BLOCK)} stappen. 🐾</div>
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
       <div class="ringwrap">${ring(broedPct,98,{big:broedPct+"%", sub:"uitbroeden", c0:"#ff85b8", c1:"#3ad9b3", sw:9})}</div>
       <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">${fmt(cur.steps||0)} stappen vandaag</div>
@@ -3059,7 +3091,7 @@ function renderVandaag(){
             <div style="width:4px;align-self:stretch;min-height:54px;border-radius:3px;background:linear-gradient(180deg,${(TYPE_GRAD[slot.type]||['#ff85b8','#ff4d97']).join(',')})"></div>
             <div style="flex:1;min-width:0">
               <div style="font-size:16px;font-weight:700">${TYPE_ICON[slot.type]} ${esc(slot.label)}</div>
-              <div class="cardsub" style="margin:3px 0 0">${slot.kind==="run"?`Advies: ~${fmt(adv.km,1)} km ${adv.type}`:slot.kind==="gym"?`${getTemplates()[slotTemplateId(slot)].oef.length} oefeningen — advies in de logger`:"Vrij klasje · log type, duur, RPE"}</div>
+              <div class="cardsub" style="margin:3px 0 0">${slot.kind==="run"?`Advies: ~${fmt(adv.km,1)} km ${adv.type}`:slot.kind==="gym"?`${getTemplates()[slotTemplateId(slot)].oef.length} oefeningen — advies in de logger`:`${(CLASS_SUBS[slot.sub]||CLASS_SUBS.hiit).label} · log type, duur, RPE`}</div>
             </div>
             <button class="btn" onclick="openSlotLogger('${slot.id}')">Loggen ✓</button>
           </div>`
@@ -3138,6 +3170,7 @@ function weekOverzichtCard(){
       <div class="miniStat" style="flex-direction:column;align-items:flex-start;gap:2px"><div class="ms-lab">Hardlopen</div><div class="ms-val">${fmt(st.km,1)}<small> km</small></div></div>
     </div>
     ${wk&&wk.uitleg&&wk.uitleg.length?`<div class="cardsub" style="margin-bottom:8px">Wat je coach voor (deze/volgende) week voorstelt:</div>${wk.uitleg.slice(0,3).map(u=>`<div style="font-size:12.5px;color:var(--dim);margin-bottom:5px">${u.icon||"•"} ${u.text}</div>`).join("")}`:""}
+    ${wk&&wk.aiRun?`<button class="btn ghost block" style="margin-top:2px;font-size:12.5px" onclick="clearAIRunPlan()">↺ Terug naar standaard hardloopvoorstel</button>`:""}
     <div class="factions" style="margin-top:10px">
       <button class="btn" onclick="copyForClaude()">📋 Kopieer voor Claude</button>
       <button class="btn ghost" onclick="showWeekSummary()">👀 Bekijk samenvatting</button>
@@ -3261,6 +3294,94 @@ async function askAICoachQuestion(){
   inp.value="";
   return runAICoach(sys, userContent, "Antwoord van je coach");
 }
+
+/* ---- AI low-level call (geen UI; geeft tekst terug of gooit) ---- */
+async function aiRaw(sys, userContent, maxTokens){
+  const p=S.profile;
+  const direct = !p.aiEndpoint && !!p.aiKey;
+  if(!p.aiEndpoint && !p.aiKey) return null;
+  const model = p.aiModel||"claude-haiku-4-5";
+  const body = { model, max_tokens: maxTokens||500, system: sys, messages:[{role:"user", content: userContent}] };
+  let url, headers;
+  if(direct){
+    url="https://api.anthropic.com/v1/messages";
+    headers={"content-type":"application/json","x-api-key":p.aiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+  } else {
+    url=p.aiEndpoint; headers={"Content-Type":"application/json"};
+    if(p.aiKey){ headers["x-api-key"]=p.aiKey; headers["anthropic-version"]="2023-06-01"; }
+  }
+  const res=await fetch(url,{method:"POST",headers,body:JSON.stringify(body)});
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const data=await res.json();
+  return (data.content&&data.content[0]&&data.content[0].text)||data.completion||data.text||"";
+}
+
+/* ---- AI-hardloop/HIIT-planner: past automatisch de loop- en HIIT-blokken aan (gym blijft vast) ----
+   Veilig: de bestaande formule blijft de HARDE bovengrens voor de lange loop; de AI kiest daarbinnen. */
+const RUN_PLAN_SYS = "Je bent Bo's nuchtere, warme hardloopcoach. Bepaal voor komende week haalbare targets voor haar hardloop-blokken en een focus voor haar HIIT, op basis van haar recente runs en herstel. Laat het rustig oplopen als het goed ging; houd gelijk of ga lichter bij slechte slaap of veel spierpijn. Overschrijd NOOIT de opgegeven veilige bovengrens voor de lange loop. Antwoord UITSLUITEND met één JSON-object, zonder tekst eromheen: {\"runs\":[{\"km\":number,\"type\":\"rustig\"|\"lang\"|\"kort\"|\"tempo\"|\"interval\",\"reden\":string}],\"hiit\":{\"focus\":string},\"samenvatting\":string}. Eén runs-entry per hardloop-blok, in dezelfde volgorde. 'reden' en 'focus' kort (max ~12 woorden), Nederlands.";
+function runHiitContext(runSlots, longCeil){
+  const st=weekStats(), p=S.profile, L=[];
+  L.push(`Plan komende week voor ${p.naam||"Bo"} (week van ${fmtDate(thisMonday(),{day:"numeric",month:"long"})}).`);
+  L.push(""); L.push("Recente hardloop-historie:");
+  const recent=runHistory().slice(-6);
+  if(recent.length) recent.forEach(r=>L.push(`- ${fmtDate(r.datum)}: ${fmt(r.km,1)} km in ${r.tijd||"?"} min (${r.tempo||"?"}, ${r.looptype||r.sub||"rustig"}), RPE ${r.rpe||"?"}`));
+  else L.push("- (nog weinig hardloop-data)");
+  L.push(""); L.push(`Langste loop ooit: ${fmt(longestRun(),1)} km.`);
+  L.push(`VEILIGE BOVENGRENS lange loop komende week: ${fmt(longCeil,1)} km — niet overschrijden.`);
+  const r=st.rec; if(r&&(r.verm||r.pijn||r.slaap)) L.push(`Herstel (gem. laatste 7 dgn): vermoeidheid ${r.verm?r.verm.toFixed(1):"-"}, spierpijn ${r.pijn?r.pijn.toFixed(1):"-"}, slaap ${r.slaap?r.slaap.toFixed(1)+"u":"-"}.`);
+  L.push(""); L.push(`Hardloop-blokken deze week (${runSlots.length}): ${runSlots.map((s,i)=>`${i+1}) ${RUN_TYPES[s.sub]?.label||s.sub}`).join(", ")||"-"}.`);
+  L.push("Plus 1 HIIT-blok (vrij klasje).");
+  L.push("Doel: rustig opbouwen, plezier, consistentie, geen blessures.");
+  return L.join("\n");
+}
+function clearAIRunPlan(){
+  if(!S.week) return;
+  S.week.slots.forEach(s=>{ if(s.kind==="run"){ delete s.aiKm; delete s.aiSub; delete s.aiReason; } if(s.kind==="hiit"){ delete s.aiFocus; } });
+  if(S.week.uitleg) S.week.uitleg=S.week.uitleg.filter(u=>!u.ai);
+  delete S.week.aiRun; S.week.aiOptOut=thisMonday();
+  save(); renderVandaag(); if(typeof renderSlotList==="function"&&el("slotList")) renderSlotList();
+  toast("↺","Terug naar het standaard hardloopvoorstel.","good");
+}
+async function maybePlanRunHiitWithAI(){
+  try{
+    const p=S.profile, wk=S.week;
+    if(!(p.aiKey||p.aiEndpoint)) return;                          // alleen als AI-coach verbonden is
+    if(!wk || (wk.aiRun && wk.aiRun.datum===thisMonday())) return; // hooguit 1× per week
+    if(wk.aiOptOut===thisMonday()) return;                        // deze week handmatig teruggezet
+    if(wk.deload) return;                                         // in een deload-week niet pushen
+    if(runHistory().length<3) return;                            // te weinig data → laat de formule
+    const runSlots=wk.slots.filter(s=>s.kind==="run");
+    const hiitSlots=wk.slots.filter(s=>s.kind==="hiit");
+    if(!runSlots.length) return;
+    const lr=longestRun();
+    const longCeil = lr>0 ? Math.round(Math.min(lr+0.5, lr*1.10)*2)/2 : 5;   // zelfde veilige stap als de formule
+    const shortCap = Math.max(5, Math.round(lr*0.7*2)/2);
+    const txt = await aiRaw(RUN_PLAN_SYS, runHiitContext(runSlots, longCeil), 450);
+    if(!txt) return;
+    let m=txt.replace(/```json|```/g,""); const a=m.indexOf("{"), b=m.lastIndexOf("}");
+    if(a<0||b<0) return; let plan; try{ plan=JSON.parse(m.slice(a,b+1)); }catch(_){ return; }
+    if(!plan || !Array.isArray(plan.runs)) return;
+    const ALLOWED=["rustig","lang","kort","tempo","interval"], aiLines=[];
+    runSlots.forEach((s,i)=>{
+      const r=plan.runs[i]; if(!r||!isNum(r.km)) return;
+      const sub = ALLOWED.includes(r.type)? r.type : s.sub;
+      const cap = sub==="lang" ? longCeil : shortCap;
+      const km = clamp(Math.round(num(r.km)*2)/2, 2, cap);
+      s.aiKm=km; s.aiSub=sub; s.aiReason=(r.reden||"").toString().slice(0,80);
+      aiLines.push({icon:"🏃", ai:true, text:`${RUN_TYPES[sub]?.label||"Loop"} ~${fmt(km,1)} km${s.aiReason?` — ${s.aiReason}`:""}`});
+    });
+    if(plan.hiit && plan.hiit.focus && hiitSlots[0]){
+      hiitSlots[0].aiFocus=String(plan.hiit.focus).slice(0,80);
+      aiLines.push({icon:"🔥", ai:true, text:`HIIT-focus: ${hiitSlots[0].aiFocus}`});
+    }
+    if(!aiLines.length) return;
+    wk.uitleg=[...aiLines, ...((wk.uitleg||[]).filter(u=>!u.ai))];
+    wk.aiRun={datum:thisMonday(), samenvatting:(plan.samenvatting||"").toString().slice(0,200)};
+    save();
+    renderVandaag(); if(typeof renderSlotList==="function"&&el("slotList")) renderSlotList();
+  }catch(e){ /* stil: bij twijfel blijft de veilige formule staan */ }
+}
+
 /* ============================================================
    VOORTGANG — data-helpers
    ============================================================ */
@@ -3335,7 +3456,7 @@ function prTiles(){
     {ic:"🦿", lab:"Zwaarste leg press", val: lp.kg? fmtKg(lp.kg)+" kg":"—", sub: lp.reps?"×"+lp.reps+" reps":"log je eerste", grad:"g-mint"},
     {ic:"🏅", lab:"Langste loop", val: prs.longestRun? fmt(prs.longestRun,1)+" km":"—", sub:"jouw record", grad:"g-amber"},
     {ic:"⚡", lab:"Snelste kilometer", val: prs.fastestKmPace? paceFmt(prs.fastestKmPace):"—", sub:"per km", grad:"g-lila"},
-    {ic:"🏃‍♀️", lab:"Totaal gelopen", val: totalKm? fmt(totalKm,1)+" km":"—", sub:"alle loopjes samen", grad:"g-rose"},
+    {ic:"🏃‍♀️", lab:"Totaal gelopen", val: totalKm? fmt(totalKm,1)+" km":"—", sub:"alle lopen samen", grad:"g-rose"},
     {ic:"🔥", lab:"Beste week", val: prs.bestWeekLoad.load? fmt(prs.bestWeekLoad.load)+" pt":"—", sub:"hoogste belasting", grad:"g-pink"},
     {ic:"📅", lab:"Meeste sessies/week", val: mostWeek? mostWeek+"×":"—", sub:"in één week", grad:"g-amber"},
     {ic:"⭐", lab:"Sessies totaal", val: totalSess? (""+totalSess):"—", sub:"sinds de start", grad:"g-mint"}
@@ -3621,7 +3742,7 @@ function stekkieLine(){
     "Niet perfect, wél consistent — dat is de truc 🌟",
     "Je sterkste spier? Je doorzettingsvermogen 💪",
     "Onze dieren groeien mee met jouw gainz 🦁",
-    "Elke training lokt nieuwe vriendjes naar de zoo 🐣",
+    "Elke training lokt nieuwe vrienden naar de zoo 🐣",
     "Hoe blijer de dieren, hoe mooier ons park 🌈",
     "Trots op je, gewoon omdat je er bent 💖",
     "Genoeg geslapen? Daar word je écht sterker van 😴",
@@ -3884,7 +4005,7 @@ function renderZooMinimap(){
   const pathRow = `<div class="park-path">
     <div class="park-entrance">🎟️ Ingang</div>
     <div class="park-lane">${stallGlyphs}${dots}</div>
-    <button onclick="openShop('faciliteiten')" title="Kraampje kopen" style="flex-shrink:0;background:var(--card);border:1px solid var(--line-2);border-radius:8px;color:var(--rose);font-size:15px;width:30px;height:30px;cursor:pointer;z-index:2">＋</button>
+    <button onclick="openShop('faciliteiten')" title="Kraam kopen" style="flex-shrink:0;background:var(--card);border:1px solid var(--line-2);border-radius:8px;color:var(--rose);font-size:15px;width:30px;height:30px;cursor:pointer;z-index:2">＋</button>
   </div>`;
   return `<div class="mini-title"><b>🗺️ Jouw park</b><span style="font-size:10.5px;color:var(--zoo-rose-muted)">tik een verblijf om te openen</span></div>
     ${cells}${addCell}${pathRow}`;
@@ -4057,7 +4178,7 @@ function openEggModal(){
   const toHatch=Math.max(0,HATCH_STEPS-(g.broedStappen||0));
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
     <h2>🥚 Mystery-eieren</h2>
-    <div class="msub">Eieren verdien je met <b>elke ${SESSIONS_PER_EGG} trainingen</b>. Je broedt ze uit door te <b>lopen</b> — elke ${fmt(HATCH_STEPS)} stappen komt er eentje uit. 🚶‍♀️🐣</div>
+    <div class="msub">Eieren verdien je met <b>elke ${SESSIONS_PER_EGG} trainingen</b>. Je broedt ze uit door te <b>lopen</b> — elke ${fmt(HATCH_STEPS)} stappen komt er een uit. 🚶‍♀️🐣</div>
     <div style="text-align:center;padding:10px 0">
       ${(g.eieren||0)>0
         ? `<div class="eggwrap"><div style="font-size:64px">🥚</div>
@@ -4600,6 +4721,7 @@ function init(){
   checkStepUrl();
   refreshChrome();
   renderVandaag();
+  maybePlanRunHiitWithAI();   // AI past hardloop/HIIT-blokken aan (alleen als coach verbonden; gym blijft vast)
   setupReminders();   // native: (her)plan dagelijkse herinnering als 'ie aanstaat
   if(!S.profile.onboarded) setTimeout(startOnboarding, 250);
   startDoubleTimeWatch();
