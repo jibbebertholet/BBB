@@ -613,7 +613,12 @@ const TYPE_GRAD  = { gym:["#ff4d97","#e0218a"], hardlopen:["#c084fc","#ff5fae"],
 /* sportmaatjes: elk dier hoort random bij 1 van 3 groepen; blijheid zakt per dag en gaat omhoog bij een matchende training */
 const SPORT_GROUPS = ["hardlopen","gym","hiit"];
 const SPORT_LABEL  = { hardlopen:"Hardloop-maatje", gym:"Gym-maatje", hiit:"HIIT-maatje" };
-const HAPPY_DECAY_TIERS = [ {min:60, rate:15}, {min:35, rate:10}, {min:0, rate:5} ]; // blijheid ≥60 → −15/dag · 35–59 → −10 · <35 → −5
+const HAPPY_DECAY_TIERS = [ {min:60, rate:20}, {min:35, rate:15}, {min:0, rate:10} ]; // blijheid ≥60 → −20/dag · 35–59 → −15 · <35 → −10 (streng)
+const HAPPY_HABIT_BOOST = 3;     // eiwit- of stappen-dagdoel 100% → alle dieren +3 (sporten blijft dominant)
+const HAPPY_KNUFFEL_BOOST = 3;   // dagelijkse knuffelronde → alle dieren +3
+const HAPPY_ZOO_BONUS_MIN = 75, HAPPY_ZOO_BONUS_PCT = 0.10;   // blije zoo (gem. ≥75%) → +10% Pootjes op sessies
+const HAPPY_SAD_THRESHOLD = 40;  // groep-gemiddelde onder dit → "ze missen je"-signaal
+const GROW_PER_DAY = 0.15;       // dieren groeien vanzelf op (~4 dagen van baby naar volwassen)
 const SPORT_BOOST  = { hardlopen:75, gym:75, hiit:100, padel:30 }; // padel heeft geen eigen groep → klein boost voor iedereen
 const TYPE_MS    = { gym:"p", hardlopen:"l", hiit:"a", padel:"t" };
 
@@ -2310,7 +2315,7 @@ const ANIMALS = {
   krab:{naam:"Krab", rarity:"gewoon", prijs:280, viaEi:false, prefZone:"aquarium", weetje:"Krabben lopen zijwaarts en zwaaien met hun scharen om indruk te maken.", cfg:{plan:"crab",body:"#e3543a",belly:"#f3b8a4",accent:"#a8331f"}},
   haai:{naam:"Haai", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"aquarium", weetje:"Haaien bestaan al langer dan bomen — echte oer-overlevers. 🦈", cfg:{plan:"fish",shape:"shark",body:"#8a97a3",belly:"#e2e8ec",finCol:"#6e7a86",accent:"#3a434c"}},
   // ---- SPECIALS (Bo's favorieten) ----
-  stekkie:{naam:"Stekkie", rarity:"special", prijs:0, gratis:true, viaEi:false, perk:{pct:0.05,label:"+5% Pootjes op alles"}, weetje:"Stekkie de teckel is je trouwe mascotte én directeur-mascotte van de zoo. 🌭", cfg:{body:"#b07a3e",belly:"#e8d3ad",ear:"#8a5a28",ears:"flop",tail:"long",extras:["longbody"],accent:"#6a4520"}},
+  stekkie:{naam:"Stekkie", rarity:"special", prijs:0, gratis:true, viaEi:false, perk:{pct:0.05,label:"+5% Pootjes op alles"}, weetje:"Stekkie de teckel is je trouwe mascotte: korte pootjes, groot hart! ❤️", cfg:{body:"#b07a3e",belly:"#e8d3ad",ear:"#8a5a28",ears:"flop",tail:"long",extras:["longbody"],accent:"#6a4520"}},
   panda:{naam:"Panda", rarity:"special", prijs:2600, viaEi:false, perk:{pct:0.15,label:"+15% Pootjes in een rust- of deload-week"}, weetje:"Panda beloont herstel — rust is waar je sterker van wordt.", cfg:{body:"#f0f0f0",belly:"#ffffff",ear:"#1f1f1f",ears:"round",tail:"stub",extras:["panda"],accent:"#1f1f1f"}},
   leeuw:{naam:"Leeuw", rarity:"special", prijs:2900, viaEi:false, perk:{pct:0.15,label:"+15% Pootjes bij een zware gym-PR"}, weetje:"De leeuw brult bij elke kracht-PR. Hoor je 'm? 🦁", cfg:{body:"#cda35e",belly:"#ecd3a4",ear:"#b8884a",ears:"round",tail:"long",extras:["mane","liontuft"],maneCol:"#9a6a30",accent:"#8a5a28"}},
   panter:{naam:"Panter", rarity:"special", prijs:2800, viaEi:false, perk:{pct:0.12,label:"+12% Pootjes op HIIT en snelle runs"}, weetje:"Snel, explosief, elegant — de panter houdt van tempo.", cfg:{body:"#2c2a34",belly:"#3a3744",ear:"#23212a",ears:"cat",tail:"long",eyeColor:"#9ff05a",extras:["whiskers"],accent:"#15131b"}},
@@ -2439,6 +2444,8 @@ function pootjesMultiplier(s, ctx){
   if(owns("panter") && (s.type==="hiit" || (s.type==="hardlopen"&&["interval","tempo"].includes(s.looptype)))){ m+=0.12; perks.push("Panter +12%"); }
   if(owns("leeuw") && ctx.gymPR){ m+=0.15; perks.push("Leeuw +15%"); }
   if(owns("panda") && S.week && S.week.deload){ m+=0.15; perks.push("Panda +15%"); }
+  const avgH=zooAvgHappy();
+  if(avgH!=null && avgH>=HAPPY_ZOO_BONUS_MIN){ m+=HAPPY_ZOO_BONUS_PCT; perks.push(`Blije zoo +${Math.round(HAPPY_ZOO_BONUS_PCT*100)}%`); }
   return {m, perks};
 }
 
@@ -2555,6 +2562,7 @@ function applyHappinessDecay(){
     let h=(d.blijheid==null?100:d.blijheid);
     for(let i=0;i<gap && h>0;i++){ h=Math.max(0, h - dailyDecayRate(h)); }   // per dag; tarief volgt het niveau (hoger = sneller)
     d.blijheid=h;
+    d.groei=Math.min(1,(d.groei==null?1:d.groei)+GROW_PER_DAY*gap);          // groeit vanzelf op naar volwassen
   });
   g.blijVervalDatum=today;
 }
@@ -2567,6 +2575,71 @@ function boostAnimalsForSession(s){
   const boost=SPORT_BOOST[s.type]; if(!boost) return {n:0, all:false};
   (g.dieren||[]).forEach(d=>{ if((d.sport||"")===s.type){ d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+boost); n++; } });
   return {n, all:false};
+}
+function boostAllAnimals(amt){ (S.game.dieren||[]).forEach(d=>{ d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+amt); }); }
+function zooAvgHappy(){ return avgOf(S.game.dieren, a=>a.blijheid); }
+function zooMood(){ const a=zooAvgHappy(); if(a==null) return {pct:null,emoji:"🐾",label:""}; const pct=Math.round(a);
+  const m = pct>=80?{emoji:"😻",label:"dolblij"}: pct>=60?{emoji:"😊",label:"blij"}: pct>=40?{emoji:"😐",label:"oké"}:{emoji:"😢",label:"verdrietig"};
+  return {pct, emoji:m.emoji, label:m.label}; }
+function sadSportGroup(){
+  const by={}; SPORT_GROUPS.forEach(sp=>by[sp]=[]);
+  (S.game.dieren||[]).forEach(d=>{ if(by[d.sport]) by[d.sport].push(d.blijheid==null?100:d.blijheid); });
+  let worst=null;
+  SPORT_GROUPS.forEach(sp=>{ if(!by[sp].length) return; const av=by[sp].reduce((a,b)=>a+b,0)/by[sp].length; if(av<HAPPY_SAD_THRESHOLD && (!worst||av<worst.av)) worst={sport:sp, av}; });
+  return worst;
+}
+function knuffelRonde(){
+  const g=S.game, today=todayISO();
+  if(!g.dieren||!g.dieren.length){ toast("🤗","Nog geen dieren om te knuffelen."); return; }
+  if(g.knuffelDatum===today){ toast("🤗","Je hebt vandaag al geknuffeld — morgen weer! 💞"); return; }
+  g.knuffelDatum=today; boostAllAnimals(HAPPY_KNUFFEL_BOOST); save(); refreshChrome();
+  celebrate(`Knuffelronde! Alle dieren +${HAPPY_KNUFFEL_BOOST} blijheid 🤗🐾`, 50);
+}
+/* verborgen easter egg: dubbele tijd (uur === minuut, bv 08:08/13:13) terwijl de app open is */
+let _lastDoubleKey=null;
+const DOUBLETIME_POOTJES = 10;   // elke dubbele tijd → +10 Pootjes (niet gecapt)
+function triggerDoubleTime(h,m){
+  let line3=""; const today=todayISO();
+  addPootjes(DOUBLETIME_POOTJES, "dubbele-tijd");
+  if(S.game.dubbeltijdDatum!==today){ S.game.dubbeltijdDatum=today; boostAllAnimals(5); line3=`<div>alle dieren +5 😊</div>`; }
+  save(); refreshChrome();
+  celebrate(null, 140);   // confetti + geluid + trilling, zonder eigen toast
+  const t=document.createElement("div");
+  t.className="toast party";
+  t.style.cssText="flex-direction:column;text-align:center;gap:3px";
+  t.innerHTML=`<div style="font-weight:800;font-size:15px">${pad2(h)}:${pad2(m)} ❤️💫</div><div>+${DOUBLETIME_POOTJES} 🐾</div>${line3}`;
+  el("toasts").appendChild(t);
+  setTimeout(()=>{ t.style.animation="toastout .3s forwards"; setTimeout(()=>t.remove(),300); }, 3600);
+}
+function checkDoubleTime(){
+  const now=new Date(), h=now.getHours(), m=now.getMinutes();
+  if(h!==m) return;
+  const key=todayISO()+" "+h+":"+m; if(key===_lastDoubleKey) return; _lastDoubleKey=key;
+  triggerDoubleTime(h,m);
+}
+function startDoubleTimeWatch(){ try{ checkDoubleTime(); }catch(e){} setInterval(()=>{ try{ checkDoubleTime(); }catch(e){} }, 15000); }
+function openHappyInfo(){
+  openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
+    <h2>💛 Hoe werkt blijheid?</h2>
+    <div class="msub">Elk dier hoort bij een sportgroep en wordt blij van de juiste training.</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div class="signal" style="margin:0"><span class="si">📉</span><div>Blijheid <b>zakt langzaam vanzelf</b> — sneller als 'ie hoog staat, milder als 'ie al laag is.</div></div>
+      <div class="signal" style="margin:0"><span class="si">🏋️</span><div><b>Trainen is dé manier</b>: een sessie maakt de dieren van die groep weer blij — 🏃 hardlopen & 🏋️ gym +75, 🔥 HIIT +100.</div></div>
+      <div class="signal" style="margin:0"><span class="si">🥕</span><div>Kleine extra's: je <b>eiwit-</b> of <b>stappendoel</b> halen (+${HAPPY_HABIT_BOOST} alle) en de dagelijkse <b>knuffelronde</b> (+${HAPPY_KNUFFEL_BOOST}).</div></div>
+      <div class="signal" style="margin:0"><span class="si">🐾</span><div>Hoe blijer je zoo, hoe meer <b>Pootjes</b> per training (vanaf ${HAPPY_ZOO_BONUS_MIN}% gemiddeld: +${Math.round(HAPPY_ZOO_BONUS_PCT*100)}%).</div></div>
+    </div>`);
+}
+function zooMoodCard(){
+  const g=S.game; if(!g.dieren||!g.dieren.length) return "";
+  const mood=zooMood(), sad=sadSportGroup();
+  return `${sad?`<div class="signal" style="margin-bottom:8px"><span class="si">${TYPE_ICON[sad.sport]||'🐾'}</span><div>Je <b>${(TYPE_LABEL[sad.sport]||sad.sport)}-maatjes</b> worden verdrietig — doe een ${TYPE_LABEL[sad.sport]||sad.sport}-sessie om ze op te vrolijken! 💕</div></div>`:""}
+    <div class="card" style="display:flex;align-items:center;gap:13px;padding:14px 16px">
+      <div style="font-size:30px">${mood.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">Zoo-stemming: ${mood.pct}% <span style="font-weight:500;color:var(--dim)">· ${mood.label}</span> <span onclick="openHappyInfo()" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--line);color:var(--dim);font-size:11px;font-weight:700;vertical-align:middle">?</span></div>
+        <div class="cardsub" style="margin:2px 0 0">Trainen maakt je dieren blij — knuffelen kan in de Zoo 🤗</div>
+      </div>
+    </div>`;
 }
 function gameAfterSession(s, ctx){
   ctx=ctx||{}; const prs=ctx.prs||[], base=ctx.base!=null?ctx.base:sessPootjesBase(s);
@@ -2627,7 +2700,8 @@ function gameAfterWeight(kg){
 function gameAfterProtein(rec){
   if(!rec || !rec.gehaald) return;
   const d=todayISO(); if(!S.game.proteinQuestDays) S.game.proteinQuestDays=[];
-  if(!S.game.proteinQuestDays.includes(d)){ S.game.proteinQuestDays.push(d); questEvent("protein"); }
+  if(!S.game.proteinQuestDays.includes(d)){ S.game.proteinQuestDays.push(d); questEvent("protein");
+    boostAllAnimals(HAPPY_HABIT_BOOST); setTimeout(()=>toast("🥩",`Je dieren werden blij van je eiwitdoel — alle +${HAPPY_HABIT_BOOST} 🐾`,"good"),520); }
   checkWeekChallenge();
 }
 
@@ -2656,6 +2730,9 @@ function recordSteps(steps, dateISO, opts){
   const delta=cur.steps-(cur.hatchCounted||0);
   cur.hatchCounted=cur.steps;
   S.game.broedStappen=Math.max(0,(S.game.broedStappen||0)+delta);
+  // dagdoel stappen 100% → alle dieren +5 (1×/dag)
+  const stTgt=stepTarget();
+  if(stTgt && cur.steps>=stTgt && !cur.goalBoosted){ cur.goalBoosted=true; boostAllAnimals(HAPPY_HABIT_BOOST); }
   S.steps[d]=cur;
   const hatched=processHatching();
   save(); refreshChrome();
@@ -3008,6 +3085,8 @@ function renderVandaag(){
     ${proteinCard()}
 
     ${stepsCard()}
+
+    ${zooMoodCard()}
 
     <div class="row r-2">
       <div class="card" onclick="go('zoo')" style="cursor:pointer">
@@ -3514,7 +3593,22 @@ function stekkieLine(){
   else if(done>0) lines.push(`${done} van 5 deze week, kom op kanjer! 💪`);
   if((g.eieren||0)>0) lines.push(`Er ${g.eieren===1?"ligt een ei":"liggen "+g.eieren+" eieren"} te wachten om uit te komen! 🥚`);
   if(g.streakDagen>=3) lines.push(`${g.streakDagen} dagen op rij — wat een reeks! 🔥`);
-  lines.push("Welkom in de zoo van Bo the Machine! 🐾","Voer me een aaitje? Tik maar op een dier!","Elke training maakt onze zoo mooier 💖","Rust mag ook — daar word je sterker van 🌿");
+  lines.push(
+    "Welkom in de zoo van Bo the Machine! 🐾",
+    "Elke training maakt onze zoo mooier 💖",
+    "Rust mag ook — daar word je sterker van 🌿",
+    "Je toekomstige zelf zegt nu al dankjewel 💖",
+    "Niet perfect, wél consistent — dat is de truc 🌟",
+    "Je sterkste spier? Je doorzettingsvermogen 💪",
+    "Onze dieren groeien mee met jouw gainz 🦁",
+    "Elke training lokt nieuwe vriendjes naar de zoo 🐣",
+    "Hoe blijer de dieren, hoe mooier ons park 🌈",
+    "Trots op je, gewoon omdat je er bent 💖",
+    "Genoeg geslapen? Daar word je écht sterker van 😴",
+    "Vergeet je eiwitten niet — held voor je booty 🥩",
+    "WOEF! Ik geloof in je 🐶",
+    "Korte pootjes, groot hart 🐾"
+  );
   return lines[Math.floor(Math.random()*Math.min(lines.length, lines.length))];
 }
 /* ============================================================
@@ -3708,6 +3802,7 @@ function renderZoo(){
       <button class="btn ghost" onclick="openEggModal()">🥚 Eieren${(g.eieren||0)>0?` (${g.eieren})`:""}</button>
       <button class="btn ghost" onclick="openStepLogger()">👟 Stappen</button>
       <button class="btn ghost" onclick="openGids()">📕 Dierengids</button>
+      <button class="btn ghost" onclick="knuffelRonde()">${(g.knuffelDatum===todayISO())?"🤗 Geknuffeld":"🤗 Knuffel"}</button>
     </div>
     <div class="zoo-tools">
       <button class="btn ghost" onclick="openQuestsModal()">🎯 Quests</button>
@@ -4031,7 +4126,7 @@ function openAnimalDetail(id){
     <div style="display:flex;flex-direction:column;gap:7px;margin:4px 0 12px">
       <div class="miniStat"><div class="ms-l"><div class="ms-ic l">🎂</div><div class="ms-lab">Leeftijd</div></div><div class="ms-val" style="font-size:14px">${animalAge(d)}</div></div>
       <div class="miniStat"><div class="ms-l"><div class="ms-ic m">🌱</div><div class="ms-lab">Groei</div></div><div class="ms-val" style="font-size:14px">${stageLabel} · ${groeiPct}%</div></div>
-      <div class="miniStat"><div class="ms-l"><div class="ms-ic p">💛</div><div class="ms-lab">Blijheid</div></div><div class="ms-val" style="font-size:14px">${Math.round(d.blijheid)}%</div></div>
+      <div class="miniStat"><div class="ms-l"><div class="ms-ic p">💛</div><div class="ms-lab">Blijheid <span onclick="openHappyInfo()" style="cursor:pointer;color:var(--rose);font-weight:700">ⓘ</span></div></div><div class="ms-val" style="font-size:14px">${Math.round(d.blijheid)}%</div></div>
       <div class="miniStat"><div class="ms-l"><div class="ms-ic a">${TYPE_ICON[d.sport]||"🏅"}</div><div class="ms-lab">Sportmaatje</div></div><div class="ms-val" style="font-size:14px">${SPORT_LABEL[d.sport]||"—"}</div></div>
     </div>
     <div class="signal" style="margin:0 0 12px"><span class="si">💡</span><div><b>Leuk weetje:</b> ${esc(a.weetje)}</div></div>
@@ -4042,23 +4137,14 @@ function openAnimalDetail(id){
     </div>
     <div class="factions" style="margin-top:6px">
       <button class="btn" onclick="saveAnimal('${id}')">Opslaan</button>
-      <button class="btn mint" onclick="feedAnimal('${id}')">🍖 Voeren (50 🐾)</button>
       ${d.soort!=='stekkie'?`<button class="btn danger" onclick="releaseAnimal('${id}')">Vrijlaten</button>`:""}
     </div>
-    <div class="cardsub" style="margin-top:8px">Blijheid zakt langzaam (sneller als 'ie hoog staat, milder als 'ie al laag is). Doe een ${TYPE_ICON[d.sport]||"🏅"} <b>${TYPE_LABEL[d.sport]||"training"}</b>-sessie en ${esc(d.naam)} springt weer blij omhoog 🐾 (voeren geeft ook een beetje + groei).</div>`);
+    <div class="cardsub" style="margin-top:8px">Blijheid zakt langzaam (sneller als 'ie hoog staat, milder als 'ie al laag is). Doe een ${TYPE_ICON[d.sport]||"🏅"} <b>${TYPE_LABEL[d.sport]||"training"}</b>-sessie en ${esc(d.naam)} springt weer blij omhoog 🐾.${d.groei<1?` ${esc(d.naam)} groeit vanzelf op naar volwassen.`:""}</div>`);
 }
 function saveAnimal(id){
   const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
   d.naam=el("an_naam").value.trim()||ANIMALS[d.soort].naam; d.zone=el("an_zone").value; d.skin=el("an_skin").value;
   save(); closeModal(); renderZoo(); toast("💾","Opgeslagen!");
-}
-function feedAnimal(id){
-  const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
-  if(S.game.pootjes<50){ toast("🐾","Nog niet genoeg Pootjes om te voeren."); return; }
-  S.game.pootjes-=50; d.groei=Math.min(1,(d.groei||0.4)+0.2); d.blijheid=Math.min(100,(d.blijheid==null?100:d.blijheid)+10);
-  save(); refreshChrome();
-  if(d.groei>=1) celebrate(d.naam+" is volwassen! 🌟",90); else toast("🍖",d.naam+" groeit lekker!","good");
-  openAnimalDetail(id);
 }
 function releaseAnimal(id){
   const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
@@ -4496,6 +4582,7 @@ function init(){
   renderVandaag();
   setupReminders();   // native: (her)plan dagelijkse herinnering als 'ie aanstaat
   if(!S.profile.onboarded) setTimeout(startOnboarding, 250);
+  startDoubleTimeWatch();
 }
 init();
 </script>
