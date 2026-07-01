@@ -487,7 +487,8 @@ function defaultState(){
       cyclusAan: false, cyclusStart: null, cyclusDuur: 28,
       aiEndpoint: "", aiKey: "", aiModel: "claude-haiku-4-5",
       accent: "#ff4d97", zooNaam: "Bo's Beestenboel",
-      geluid: true, notifs: false, onboarded: false
+      geluid: true, notifs: false, onboarded: false,
+      eiwitPresets: []        // eigen eiwit-snelkeuzes van Bo: [{naam, gram}]
     },
     weights: [],            // [{datum, kg}]
     sessions: [],           // gelogde trainingen (zie fase 2)
@@ -1728,28 +1729,42 @@ function saveWeight(){
 const PROTEIN_PRESETS = [
   {naam:"Eiwitshake", gram:25},
   {naam:"Magere kwark (250g)", gram:25},
-  {naam:"Kwark met noten", gram:22},
-  {naam:"Skyr (150g)", gram:15},
   {naam:"Griekse yoghurt (150g)", gram:10},
   {naam:"Eitje", gram:6},
   {naam:"2 eieren", gram:13},
   {naam:"Kipfilet (100g)", gram:23},
   {naam:"Zalm (100g)", gram:20},
-  {naam:"Tonijn (blikje)", gram:25},
-  {naam:"Biefstuk (100g)", gram:26},
-  {naam:"Cottage cheese (100g)", gram:11},
   {naam:"Proteïnereep", gram:20},
-  {naam:"Handje noten", gram:6},
-  {naam:"Blokje kaas", gram:7},
-  {naam:"Edamame (100g)", gram:11},
-  {naam:"Linzen / bonen (100g)", gram:9},
-  {naam:"Hüttenkäse (100g)", gram:12}
+  {naam:"Eiwitlimonade (Upfront)", gram:19},
+  {naam:"Eiwit-ijskoffie (Upfront)", gram:20}
 ];
+function customProteinPresets(){ return S.profile.eiwitPresets || (S.profile.eiwitPresets=[]); }
+/* ingebouwde presets + Bo's eigen snelkeuzes, elk getagd met .eigen zodat de UI ze kan onderscheiden */
+function allProteinPresets(){
+  return [...PROTEIN_PRESETS.map(p=>({naam:p.naam, gram:p.gram, eigen:false})),
+          ...customProteinPresets().map(p=>({naam:p.naam, gram:num(p.gram), eigen:true}))];
+}
 function proteinPreset(){
   const sel=el("pr_preset"); if(!sel) return; const i=sel.value; if(i==="") return;
-  const p=PROTEIN_PRESETS[+i]; if(!p) return;
+  const p=allProteinPresets()[+i]; if(!p) return;
   if(el("pr_naam")) el("pr_naam").value=p.naam;
   if(el("pr_gram")) el("pr_gram").value=p.gram;
+}
+/* Bo bewaart de huidige maaltijd (naam + gram) als eigen snelkeuze (update bij dezelfde naam) */
+function saveProteinPreset(){
+  const naam=(el("pr_naam")?.value||"").trim(), gram=num(el("pr_gram")?.value);
+  if(!naam || !gram){ toast("🤔","Vul eerst een maaltijd én eiwit-gram in om te bewaren."); return; }
+  const lijst=customProteinPresets();
+  const bestaand=lijst.find(p=>(p.naam||"").toLowerCase()===naam.toLowerCase());
+  if(bestaand){ bestaand.gram=gram; toast("★","Snelkeuze bijgewerkt.","good"); }
+  else { lijst.push({naam, gram}); toast("★","Bewaard als snelkeuze — staat nu in de lijst!","good"); }
+  save(); renderProteinModal();
+  if(el("pr_naam")) el("pr_naam").value=naam;    // behoud de invoer zodat ze 'm ook nog kan loggen
+  if(el("pr_gram")) el("pr_gram").value=gram;
+}
+function removeProteinPreset(i){
+  const lijst=customProteinPresets();
+  if(i>=0 && i<lijst.length){ lijst.splice(i,1); save(); renderProteinModal(); }
 }
 function proteinTarget(){
   const p=S.profile; if(p.eiwitDoel) return p.eiwitDoel;
@@ -1802,13 +1817,18 @@ function renderProteinModal(){
     <div class="frow c1" style="margin-bottom:8px"><div class="field"><label>Kies snel een maaltijd</label>
       <select id="pr_preset" onchange="proteinPreset()">
         <option value="">— kies uit de lijst (of typ zelf) —</option>
-        ${PROTEIN_PRESETS.map((p,i)=>`<option value="${i}">${esc(p.naam)} · ${p.gram} g</option>`).join("")}
+        ${allProteinPresets().map((p,i)=>`<option value="${i}">${p.eigen?"★ ":""}${esc(p.naam)} · ${p.gram} g</option>`).join("")}
       </select></div></div>
+    ${customProteinPresets().length?`<div class="cardsub" style="margin:0 0 5px">Jouw eigen snelkeuzes (★) — tik op ✕ om te verwijderen</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+      ${customProteinPresets().map((p,i)=>`<span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg-soft);border:1px solid var(--line);border-radius:20px;padding:4px 5px 4px 11px;font-size:12.5px">★ ${esc(p.naam)} · ${num(p.gram)} g <button onclick="removeProteinPreset(${i})" aria-label="Verwijder snelkeuze ${esc(p.naam)}" title="verwijder" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px">✕</button></span>`).join("")}
+    </div>`:""}
     <div class="frow c3" style="align-items:end">
       <div class="field" style="grid-column:span 2"><label>Maaltijd</label><input id="pr_naam" placeholder="bv. kwark + noten" onkeydown="if(event.key==='Enter')addMeal()"></div>
       <div class="field"><label>Eiwit (g)</label><input id="pr_gram" type="number" inputmode="numeric" placeholder="30" onkeydown="if(event.key==='Enter')addMeal()"></div>
     </div>
     <button class="btn block" onclick="addMeal()">+ Maaltijd toevoegen</button>
+    <button class="btn ghost block" type="button" onclick="saveProteinPreset()" style="margin-top:6px;font-size:13px">★ Bewaar deze als snelkeuze</button>
     <div class="frow c1" style="margin-top:10px"><div class="field"><label>Notitie (optioneel)</label><textarea id="pr_note" placeholder="Een gevoel, honger, een lekkere maaltijd…" onchange="saveProteinNote()">${esc(pr.notitie)}</textarea></div></div>
     <div class="factions" style="margin-top:4px">
       <button class="btn" onclick="closeModal()">Klaar</button>
@@ -1844,7 +1864,7 @@ async function estimateProteinAI(){
   const btn=el("pr_ai_btn");
   if(btn){ btn.disabled=true; btn.textContent="✨ Schatten…"; }
   try{
-    const sys="Je bent een nuchtere voedingsassistent. De gebruiker beschrijft in het Nederlands wat ze heeft gegeten. Schat het TOTALE aantal gram EIWIT (proteïne) zo goed mogelijk op basis van gangbare porties; ga bij een onduidelijke hoeveelheid uit van een normale portie. Antwoord UITSLUITEND met één JSON-object, zonder tekst eromheen: {\"naam\": string (korte NL-samenvatting van de maaltijd, max ~40 tekens), \"eiwit_gram\": number (heel getal)}. Kun je het echt niet inschatten, gebruik dan eiwit_gram 0.";
+    const sys="Je bent een nuchtere voedingsassistent. De gebruiker beschrijft in het Nederlands wat ze heeft gegeten. Schat het TOTALE aantal gram EIWIT (proteïne) zo goed mogelijk op basis van gangbare porties; ga bij een onduidelijke hoeveelheid uit van een normale portie. Wees CONSERVATIEF bij eiwitpoeders en shakes: reken een shake als één portie van ~20-25 g eiwit (meestal is 2 scoops samen één shake) — tel dus niet per scoop. Nederlandse eiwitdrankjes zoals eiwitlimonade of eiwit-ijskoffie (bv. van Upfront) bevatten meestal ~15-20 g eiwit per flesje. Antwoord UITSLUITEND met één JSON-object, zonder tekst eromheen: {\"naam\": string (korte NL-samenvatting van de maaltijd, max ~40 tekens), \"eiwit_gram\": number (heel getal)}. Kun je het echt niet inschatten, gebruik dan eiwit_gram 0.";
     const raw=await aiRaw(sys, tekst, 150);
     if(raw==null){ toast("🔑","Verbind eerst je AI-coach bij Logboek → instellingen."); return; }
     let m=String(raw).replace(/```json|```/g,""); const a=m.indexOf("{"), b=m.lastIndexOf("}");
