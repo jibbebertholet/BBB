@@ -18,7 +18,7 @@
 :root{
   --bg:#160a12; --bg-soft:#1f0e1a; --card:#26121f; --card-2:#2e1626; --card-hi:#3a1d30;
   --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.13);
-  --text:#fdeef6; --dim:#d8a3c2; --mut:#a06f8c;
+  --text:#fdeef6; --dim:#d8a3c2; --mut:#b07d9b;
   --pink:#ff4d97; --rose:#ff85b8; --magenta:#e0218a; --hot:#ff2d78;
   --mint:#3ad9b3; --teal:#27c4dd; --amber:#ffb454; --lila:#c084fc; --red:#fb5b6e; --green:#3ad9b3;
   --g-pink:linear-gradient(135deg,#ff4d97 0%,#e0218a 100%);
@@ -142,7 +142,8 @@ section.panel.active{display:block;animation:rise .32s cubic-bezier(.2,.7,.3,1)}
 .btn{font:inherit;font-size:13.5px;font-weight:700;letter-spacing:.01em;background:var(--g-pink);color:#fff;border:none;padding:11px 20px;border-radius:12px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(255,77,151,.65);transition:.15s;display:inline-flex;align-items:center;gap:8px;justify-content:center}
 .btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
-.btn.sm{padding:9px 14px;font-size:12.5px;border-radius:10px;min-height:40px}
+.btn.sm{padding:9px 14px;font-size:12.5px;border-radius:10px;min-height:44px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .btn.lg{padding:14px 24px;font-size:15px}
 .btn.block{width:100%}
 .btn.ghost{background:var(--card);color:var(--text);border:1px solid var(--line-2);box-shadow:none}
@@ -162,7 +163,7 @@ input,select,textarea{width:100%;font:inherit;font-size:14px;padding:10px 12px;b
 input:focus,select:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,77,151,.18)}
 textarea{min-height:52px;resize:vertical}
 input[type=checkbox]{width:auto}
-.ex-help{width:19px;height:19px;border-radius:50%;border:1px solid var(--line-2);background:var(--card-hi);color:var(--rose);font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;line-height:1}
+.ex-help{width:26px;height:26px;border-radius:50%;border:1px solid var(--line-2);background:var(--card-hi);color:var(--rose);font-size:12.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;line-height:1}
 .ex-help:hover{border-color:var(--pink);background:var(--bg-soft)}
 .factions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:6px}
 
@@ -210,7 +211,7 @@ footer.foot{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);fo
 @keyframes pop{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:none}}
 .modal h2{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
 .modal .msub{font-size:13px;color:var(--dim);margin-bottom:16px;line-height:1.55}
-.modal .x{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:11px;border:1px solid var(--line-2);background:var(--card);color:var(--dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal .x{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:11px;border:1px solid var(--line-2);background:var(--card);color:var(--dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .modal .x:hover{color:#fff;border-color:var(--pink)}
 
 /* ---- Toast ---- */
@@ -420,17 +421,17 @@ footer.foot{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);fo
 
   <div class="topbar">
     <div class="brand">
-      <div class="mark">🍑</div>
+      <div class="mark" aria-hidden="true">🍑</div>
       <div class="bt"><b>Bo's Booty Builder 3000</b><span>BBB · jouw eigen coach</span></div>
     </div>
     <div class="spacer"></div>
-    <div class="pootjespill" id="pootjesPill" onclick="go('zoo')"><span class="pw">🐾</span><span id="pootjesPillVal">0</span></div>
+    <div class="pootjespill" id="pootjesPill" role="button" tabindex="0" onclick="go('zoo')"><span class="pw" aria-hidden="true">🐾</span><span class="sr-only">Pootjes: </span><span id="pootjesPillVal">0</span><span class="sr-only"> — open de zoo</span></div>
     <nav class="navtabs desktop-tabs" id="tabs">
-      <button data-tab="vandaag" class="active"><span class="tt-ic">🌸</span>Vandaag</button>
-      <button data-tab="week"><span class="tt-ic">🗓️</span>Week</button>
-      <button data-tab="voortgang"><span class="tt-ic">📈</span>Voortgang</button>
-      <button data-tab="zoo"><span class="tt-ic">🦁</span>Zoo</button>
-      <button data-tab="logboek"><span class="tt-ic">📖</span>Logboek</button>
+      <button data-tab="vandaag" class="active"><span class="tt-ic" aria-hidden="true">🌸</span>Vandaag</button>
+      <button data-tab="week"><span class="tt-ic" aria-hidden="true">🗓️</span>Week</button>
+      <button data-tab="voortgang"><span class="tt-ic" aria-hidden="true">📈</span>Voortgang</button>
+      <button data-tab="zoo"><span class="tt-ic" aria-hidden="true">🦁</span>Zoo</button>
+      <button data-tab="logboek"><span class="tt-ic" aria-hidden="true">📖</span>Logboek</button>
     </nav>
   </div>
 
@@ -441,7 +442,7 @@ footer.foot{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);fo
   <section class="panel" id="tab-logboek"></section>
 
   <footer class="foot">
-    Alles wordt lokaal op je iPhone bewaard (geen account nodig) — werkt offline en blijft veilig staan, ook na updates.
+    Alles wordt lokaal op je iPhone bewaard (geen account nodig) — werkt offline. Tip: maak af en toe een back-up via Exporteer in het Logboek.
     <br>Gemaakt met ❤️ voor Bo · door <svg style="height:15px;width:auto;vertical-align:-3px;opacity:.92;margin-left:4px" xmlns="http://www.w3.org/2000/svg" viewBox="-226.72 -948.72 8941.44 1325.44" role="img" aria-label="Bertholet Projects">
   <path d="M384 0L74 0L74-710L350-710Q482-710 552-663.50Q622-617 622-517L622-517Q622-453 584-413.50Q546-374 475-367L475-367Q561-360 606.50-315Q652-270 652-196L652-196Q652-97 582.50-48.50Q513 0 384 0L384 0ZM226-586L226-416L346-416Q402-416 435.50-437.50Q469-459 469-501L469-501Q469-545 436.50-565.50Q404-586 346-586L346-586L226-586ZM226-306L226-124L377-124Q431-124 465-146Q499-168 499-214L499-214Q499-259 465.50-282.50Q432-306 377-306L377-306L226-306Z M963 12L963 12Q881 12 820.50-23Q760-58 726.50-120.50Q693-183 693-268L693-268Q693-352 726-415Q759-478 819.50-513Q880-548 962-548L962-548Q1042-548 1101-513Q1160-478 1192.50-413Q1225-348 1225-258L1225-258L1225-228L848-228Q851-164 882.50-133Q914-102 966-102L966-102Q1044-102 1066-167L1066-167L1217-158Q1195-78 1127.50-33Q1060 12 963 12ZM848-320L848-320L1071-320Q1068-379 1038.50-408Q1009-437 962-437L962-437Q915-437 884.50-406.50Q854-376 848-320Z M1427 0L1277 0L1277-536L1419-536L1423-429Q1439-485 1470-510.50Q1501-536 1550-536L1550-536L1599-536L1599-412L1550-412Q1487-412 1457-386.50Q1427-361 1427-301L1427-301L1427 0Z M1982 0L1852 0Q1769 0 1730-38.50Q1691-77 1691-161L1691-161L1691-424L1605-424L1605-536L1691-536L1691-662L1841-662L1841-536L1982-536L1982-424L1841-424L1841-179Q1841-140 1857.50-126Q1874-112 1907-112L1907-112L1982-112L1982 0Z M2174 0L2024 0L2024-710L2174-710L2174-470Q2196-510 2235-529Q2274-548 2322-548L2322-548Q2412-548 2457.50-491Q2503-434 2503-345L2503-345L2503 0L2353 0L2353-309Q2353-369 2334-399Q2315-429 2272-429L2272-429Q2226-429 2200-397.50Q2174-366 2174-305L2174-305L2174 0Z M2825 12L2825 12Q2743 12 2682-22.50Q2621-57 2587-120Q2553-183 2553-268L2553-268Q2553-353 2587-415.50Q2621-478 2682-513Q2743-548 2825-548L2825-548Q2907-548 2968.50-513Q3030-478 3063.50-415.50Q3097-353 3097-268L3097-268Q3097-183 3063.50-120Q3030-57 2968.50-22.50Q2907 12 2825 12ZM2825-103L2825-103Q2881-103 2912-146.50Q2943-190 2943-268L2943-268Q2943-346 2912-389.50Q2881-433 2825-433L2825-433Q2769-433 2738-389.50Q2707-346 2707-268L2707-268Q2707-190 2738-146.50Q2769-103 2825-103Z M3384 0L3295 0Q3229 0 3192-32.50Q3155-65 3155-140L3155-140L3155-710L3305-710L3305-156Q3305-132 3316-122Q3327-112 3348-112L3348-112L3384-112L3384 0Z M3659 12L3659 12Q3577 12 3516.50-23Q3456-58 3422.50-120.50Q3389-183 3389-268L3389-268Q3389-352 3422-415Q3455-478 3515.50-513Q3576-548 3658-548L3658-548Q3738-548 3797-513Q3856-478 3888.50-413Q3921-348 3921-258L3921-258L3921-228L3544-228Q3547-164 3578.50-133Q3610-102 3662-102L3662-102Q3740-102 3762-167L3762-167L3913-158Q3891-78 3823.50-33Q3756 12 3659 12ZM3544-320L3544-320L3767-320Q3764-379 3734.50-408Q3705-437 3658-437L3658-437Q3611-437 3580.50-406.50Q3550-376 3544-320Z M4309 0L4179 0Q4096 0 4057-38.50Q4018-77 4018-161L4018-161L4018-424L3932-424L3932-536L4018-536L4018-662L4168-662L4168-536L4309-536L4309-424L4168-424L4168-179Q4168-140 4184.50-126Q4201-112 4234-112L4234-112L4309-112L4309 0Z  M4710 0L4558 0L4558-710L4842-710Q4970-710 5042.50-648Q5115-586 5115-478L5115-478Q5115-370 5042.50-307.50Q4970-245 4842-245L4842-245L4710-245L4710 0ZM4710-582L4710-373L4833-373Q4893-373 4926-399.50Q4959-426 4959-478L4959-478Q4959-530 4926-556Q4893-582 4833-582L4833-582L4710-582Z M5326 0L5176 0L5176-536L5318-536L5322-429Q5338-485 5369-510.50Q5400-536 5449-536L5449-536L5498-536L5498-412L5449-412Q5386-412 5356-386.50Q5326-361 5326-301L5326-301L5326 0Z M5764 12L5764 12Q5682 12 5621-22.50Q5560-57 5526-120Q5492-183 5492-268L5492-268Q5492-353 5526-415.50Q5560-478 5621-513Q5682-548 5764-548L5764-548Q5846-548 5907.50-513Q5969-478 6002.50-415.50Q6036-353 6036-268L6036-268Q6036-183 6002.50-120Q5969-57 5907.50-22.50Q5846 12 5764 12ZM5764-103L5764-103Q5820-103 5851-146.50Q5882-190 5882-268L5882-268Q5882-346 5851-389.50Q5820-433 5764-433L5764-433Q5708-433 5677-389.50Q5646-346 5646-268L5646-268Q5646-190 5677-146.50Q5708-103 5764-103Z M6086 150L5996 150L5996 38L6056 38Q6085 38 6100 26Q6115 14 6115-22L6115-22L6115-536L6265-536L6265-18Q6265 72 6224.50 111Q6184 150 6086 150L6086 150ZM6267-602L6112-602L6112-722L6267-722L6267-602Z M6587 12L6587 12Q6505 12 6444.50-23Q6384-58 6350.50-120.50Q6317-183 6317-268L6317-268Q6317-352 6350-415Q6383-478 6443.50-513Q6504-548 6586-548L6586-548Q6666-548 6725-513Q6784-478 6816.50-413Q6849-348 6849-258L6849-258L6849-228L6472-228Q6475-164 6506.50-133Q6538-102 6590-102L6590-102Q6668-102 6690-167L6690-167L6841-158Q6819-78 6751.50-33Q6684 12 6587 12ZM6472-320L6472-320L6695-320Q6692-379 6662.50-408Q6633-437 6586-437L6586-437Q6539-437 6508.50-406.50Q6478-376 6472-320Z M7144 12L7144 12Q7062 12 7000.50-23Q6939-58 6905.50-120.50Q6872-183 6872-268L6872-268Q6872-352 6905.50-415Q6939-478 7000.50-513Q7062-548 7144-548L7144-548Q7215-548 7271.50-523Q7328-498 7363-451Q7398-404 7406-338L7406-338L7251-331Q7244-381 7215.50-406.50Q7187-432 7144-432L7144-432Q7088-432 7057-389Q7026-346 7026-268L7026-268Q7026-190 7057-146.50Q7088-103 7144-103L7144-103Q7187-103 7216-129.50Q7245-156 7251-210L7251-210L7406-204Q7399-138 7364.50-89.50Q7330-41 7273.50-14.50Q7217 12 7144 12Z M7785 0L7655 0Q7572 0 7533-38.50Q7494-77 7494-161L7494-161L7494-424L7408-424L7408-536L7494-536L7494-662L7644-662L7644-536L7785-536L7785-424L7644-424L7644-179Q7644-140 7660.50-126Q7677-112 7710-112L7710-112L7785-112L7785 0Z M8053 12L8053 12Q7923 12 7862-39Q7801-90 7795-169L7795-169L7947-174Q7954-136 7978-115Q8002-94 8053-94L8053-94Q8136-94 8136-148L8136-148Q8136-165 8128-176Q8120-187 8097-195.50Q8074-204 8029-211L8029-211Q7945-226 7897.50-246.50Q7850-267 7830.50-298.50Q7811-330 7811-376L7811-376Q7811-453 7871-500.50Q7931-548 8050-548L8050-548Q8130-548 8182-524Q8234-500 8260.50-458Q8287-416 8291-364L8291-364L8141-358Q8139-395 8116.50-418.50Q8094-442 8048-442L8048-442Q8008-442 7987-425.50Q7966-409 7966-382L7966-382Q7966-353 7986.50-338.50Q8007-324 8062-316L8062-316Q8147-303 8197-282Q8247-261 8268.50-229Q8290-197 8290-150L8290-150Q8290-72 8226-30Q8162 12 8053 12Z" fill="#ece2e8"></path>
   <path d="M8488 0L8325 0L8325-153L8488-153L8488 0Z" fill="#d99a3a"></path>
@@ -450,15 +451,15 @@ footer.foot{margin-top:42px;padding-top:18px;border-top:1px solid var(--line);fo
 </div>
 
 <nav class="botnav" id="botnav">
-  <button data-tab="vandaag" class="active"><span class="bi">🌸</span>Vandaag</button>
-  <button data-tab="week"><span class="bi">🗓️</span>Week</button>
-  <button data-tab="voortgang"><span class="bi">📈</span>Voortgang</button>
-  <button data-tab="zoo"><span class="bi">🦁</span>Zoo</button>
-  <button data-tab="logboek"><span class="bi">📖</span>Logboek</button>
+  <button data-tab="vandaag" class="active"><span class="bi" aria-hidden="true">🌸</span>Vandaag</button>
+  <button data-tab="week"><span class="bi" aria-hidden="true">🗓️</span>Week</button>
+  <button data-tab="voortgang"><span class="bi" aria-hidden="true">📈</span>Voortgang</button>
+  <button data-tab="zoo"><span class="bi" aria-hidden="true">🦁</span>Zoo</button>
+  <button data-tab="logboek"><span class="bi" aria-hidden="true">📖</span>Logboek</button>
 </nav>
 
-<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
-<div class="overlay" id="overlay2" style="z-index:210"><div class="modal" id="modal2"></div></div>
+<div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+<div class="overlay" id="overlay2" style="z-index:210"><div class="modal" id="modal2" role="dialog" aria-modal="true" tabindex="-1"></div></div>
 <div id="toasts" role="status" aria-live="polite"></div>
 <canvas id="confetti"></canvas>
 
@@ -517,10 +518,13 @@ function defaultGame(){
     badges: [],
     quests: null, questMaand: null,
     zooNiveau: 1, bezoekers: 0,
-    events: {}, eventDieren: [],
     activeZone: "home",
     totaalEierenUit: 0,
-    zooNachtForce: null      // null=auto (volgt de klok), true=nacht, false=dag
+    zooNachtForce: null,     // null=auto (volgt de klok), true=nacht, false=dag
+    // week-/dagsleutels + boost-guards (voorheen lazy geïnitialiseerd, nu expliciet in de shape)
+    weekGoalAwarded: null, weekChDone: null, variatieWeek: null, wegingWeek: null,
+    proteinQuestDays: [], blijVervalDatum: null, knuffelDatum: null,
+    dubbeltijdDatum: null, streak7Awarded: null
   };
 }
 
@@ -555,6 +559,7 @@ function deepDefaults(obj, def){
 function migrate(d){
   // versie-gestuurde schema-migraties — vangnet voor toekomstige hernoemingen/typewijzigingen
   let v = d.v || 0;
+  if(v > APP_VERSION) console.warn(`State-versie ${v} is nieuwer dan deze build (${APP_VERSION}) — mogelijk een oudere app-versie. Velden blijven zoveel mogelijk behouden.`);
   if(v < 2){
     // klasje-systeem: oude HIIT-slots (sub "klas", label "HIIT-les"/"HIIT-klasje") → nieuw sub "hiit", label "HIIT"
     if(d.week && Array.isArray(d.week.slots)){
@@ -663,23 +668,54 @@ function toast(emoji, text, kind, ms){
   const dur = ms || (kind==="party"?3200:2400);
   setTimeout(()=>{ t.style.animation="toastout .3s forwards"; setTimeout(()=>t.remove(),300); }, dur);
 }
-let modalLocked=false;
+let modalLocked=false, lastFocus=null, lastFocus2=null;
+const FOCUSABLE='button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
+function focusModal(m){ const f=m.querySelector(FOCUSABLE); (f||m).focus(); }
+function restoreFocus(node){ if(node && node.focus){ try{ node.focus(); }catch(e){} } }
 function openModal(html, wide, locked){
+  lastFocus=document.activeElement;
   const m=el("modal"); m.className="modal"+(wide?" wide":""); m.innerHTML=html;
   modalLocked=!!locked;
   el("overlay").classList.add("show");
+  focusModal(m);
 }
 function closeModal(force){
   if(modalLocked && !force) return;          // niet-wegklikbare modal (bv. onboarding)
   modalLocked=false;
   el("overlay").classList.remove("show"); if(typeof demoTimer!=="undefined"&&demoTimer){ clearInterval(demoTimer); demoTimer=null; }
+  restoreFocus(lastFocus); lastFocus=null;
 }
 /* tweede laag — sub-modal bovenop een open modal (bv. oefening-demo), sluit alleen zichzelf */
-function openSubModal(html, wide){ const m=el("modal2"); m.className="modal"+(wide?" wide":""); m.innerHTML=html; el("overlay2").classList.add("show"); }
-function closeSubModal(){ el("overlay2").classList.remove("show"); el("modal2").innerHTML=""; if(typeof demoTimer!=="undefined"&&demoTimer){ clearInterval(demoTimer); demoTimer=null; } }
+function openSubModal(html, wide){ lastFocus2=document.activeElement; const m=el("modal2"); m.className="modal"+(wide?" wide":""); m.innerHTML=html; el("overlay2").classList.add("show"); focusModal(m); }
+function closeSubModal(){ el("overlay2").classList.remove("show"); el("modal2").innerHTML=""; if(typeof demoTimer!=="undefined"&&demoTimer){ clearInterval(demoTimer); demoTimer=null; } restoreFocus(lastFocus2); lastFocus2=null; }
 el("overlay").addEventListener("click", e=>{ if(e.target===el("overlay")) closeModal(); });
 el("overlay2").addEventListener("click", e=>{ if(e.target===el("overlay2")) closeSubModal(); });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ if(el("overlay2").classList.contains("show")) closeSubModal(); else closeModal(); } });
+/* toetsenbord-toegankelijkheid voor custom controls (toggles, pootjes-pil): Enter/Spatie = klik.
+   En houd aria-checked van de schakelaars in sync met hun visuele 'on'-staat. */
+document.addEventListener("keydown", e=>{
+  const t=e.target;
+  if(!t || !t.getAttribute) return;
+  const tag=t.tagName;
+  if(tag==="BUTTON"||tag==="A"||tag==="INPUT"||tag==="TEXTAREA"||tag==="SELECT") return;
+  if(t.getAttribute("tabindex")==="0" && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); t.click(); }
+});
+document.addEventListener("click", e=>{
+  const t=e.target;
+  if(t && t.classList && t.classList.contains("toggle")) t.setAttribute("aria-checked", t.classList.contains("on")?"true":"false");
+});
+/* focus-trap: houd Tab-focus binnen de bovenste open modal */
+document.addEventListener("keydown", e=>{
+  if(e.key!=="Tab") return;
+  const ov2=el("overlay2").classList.contains("show"), ov=el("overlay").classList.contains("show");
+  if(!ov && !ov2) return;
+  const m = ov2 ? el("modal2") : el("modal");
+  const f = [...m.querySelectorAll(FOCUSABLE)].filter(x=>x.offsetParent!==null);
+  if(!f.length) return;
+  const first=f[0], last=f[f.length-1];
+  if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+  else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+});
 
 /* confetti — canvas particles in roze-tinten */
 const confettiCanvas = el("confetti");
@@ -687,7 +723,9 @@ const cctx = confettiCanvas.getContext("2d");
 let confettiParticles = [], confettiRAF = null;
 function sizeConfetti(){ confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; }
 addEventListener("resize", sizeConfetti); sizeConfetti();
+function reducedMotion(){ return !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); }
 function confetti(power){
+  if(reducedMotion()) return;   // respecteer systeeminstelling 'verminder beweging'
   sizeConfetti();
   const colors=["#ff4d97","#ff85b8","#e0218a","#c084fc","#3ad9b3","#ffd16a","#ff2d78"];
   const n=power||90;
@@ -952,11 +990,11 @@ function startDemoAnim(slug){
 function openExerciseDemo(exId){
   const ex=exById(exId), d=EX_DEMO[exId]||{};
   const yt="https://www.youtube.com/results?search_query="+encodeURIComponent((d.yt||ex.naam)+" techniek");
-  openSubModal(`<button class="x" onclick="closeSubModal()">✕</button>
+  openSubModal(`<button class="x" aria-label="Sluiten" onclick="closeSubModal()">✕</button>
     <h2>${ex.icon||"🏋️‍♀️"} ${esc(ex.naam)}</h2>
     <div class="msub">Zo voer je 'm goed uit.${ex.spier?` Spiergroep: <b>${esc(ex.spier)}</b>.`:""}</div>
     ${d.demo?`<div id="exDemoWrap" style="position:relative;width:100%;max-width:280px;margin:0 auto 12px;border-radius:14px;overflow:hidden;background:#f2f2f2;aspect-ratio:1/1;border:1px solid var(--line-2)">
-      <img id="exDemoImg" src="${EXDB}${d.demo}/0.jpg" alt="demo" style="width:100%;height:100%;object-fit:cover;display:block" onerror="var w=document.getElementById('exDemoWrap'); if(w) w.style.display='none';">
+      <img id="exDemoImg" src="${EXDB}${d.demo}/0.jpg" alt="Techniekdemo: ${esc(ex.naam)}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="var w=document.getElementById('exDemoWrap'); if(w) w.style.display='none';">
       <div style="position:absolute;bottom:6px;right:7px;font-size:9.5px;color:#555;background:rgba(255,255,255,.75);padding:1px 6px;border-radius:8px">animatie · free-exercise-db</div></div>`:""}
     ${d.cues&&d.cues.length?`<div class="fl">Techniek</div><ol style="margin:6px 0 14px 18px;color:var(--dim);font-size:13.5px;line-height:1.85">${d.cues.map(c=>`<li>${esc(c)}</li>`).join("")}</ol>`:`<div class="cardsub" style="margin-bottom:12px">Bekijk de video voor de juiste techniek.</div>`}
     <a class="btn block" href="${yt}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">▶ Techniek-video bekijken</a>
@@ -1014,16 +1052,23 @@ function addPootjes(n, reden){
   n=Math.round(n); if(!n) return;
   S.game.pootjes = Math.max(0, S.game.pootjes + n);
 }
-/* streak: traint ze vandaag, +1; rustdagen breken niet binnen marge (max 2 rust/7d) */
+/* streak: max 1 rustdag telt door (gap ≤ 2); 2 rustdagen op rij of langer stoppen breekt de reeks.
+   refreshStreak() ijkt bij het openen van de app zodat stoppen de reeks ook echt laat vervallen. */
 function updateStreak(datum){
   const g=S.game;
-  if(g.streakLaatste===datum) return; // al geteld vandaag
+  if(g.streakLaatste===datum) return;              // al geteld vandaag
   if(!g.streakLaatste){ g.streakDagen=1; g.streakLaatste=datum; return; }
   const gap=daysBetween(g.streakLaatste, datum);
-  if(gap<=0) return; // terug-gedateerde sessie: anker niet achteruit schuiven
-  if(gap<=2){ g.streakDagen+=1; } // max 1 rustdag ertussen = geen breuk
-  else { g.streakDagen=1; }
+  if(gap<=0) return;                               // terug-gedateerde sessie: anker niet achteruit schuiven
+  if(gap<=2) g.streakDagen+=1;                     // 0 of 1 rustdag ertussen → reeks groeit
+  else g.streakDagen=1;                            // 2+ rustdagen op rij → reeks (her)start op 1
   g.streakLaatste=datum;
+}
+/* ijk de reeks tegen vandaag: 2+ rustdagen op rij (gap > 2) betekent dat de reeks verbroken is */
+function refreshStreak(){
+  const g=S.game;
+  if(!g.streakLaatste){ g.streakDagen=0; return; }
+  if(daysBetween(g.streakLaatste, todayISO())>2) g.streakDagen=0;
 }
 /* Pootjes-basis = duur × intensiteitsfactor (laag 3 / matig 5 / hoog 7), losgekoppeld van RPE
    zodat de munt-economie niet door RPE wordt opgeblazen. Belasting (sessLoad) blijft RPE-gebaseerd. */
@@ -1550,10 +1595,10 @@ function openRunLogger(slotId){
 function pickLoop(v){ LOGGER.looptype=v; document.querySelectorAll("#lg_loop button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); }
 function updTempo(){ const t=calcTempo(num(el("lg_km").value), num(el("lg_tijd").value)); el("tempoChip").textContent=t||"tempo verschijnt hier"; }
 function saveRunSession(){
-  const km=num(el("lg_km").value), tijd=num(el("lg_tijd").value);
+  const km=num(el("lg_km")?.value), tijd=num(el("lg_tijd")?.value);
   if(!km && !tijd){ toast("🤔","Vul minstens afstand of tijd in."); return; }
-  const sess={ id:LOGGER.sessionId||uid("s"), type:"hardlopen", datum:el("lg_datum").value, slot:LOGGER.slotId,
-    km, tijd, tempo:calcTempo(km,tijd), looptype:LOGGER.looptype, hr:el("lg_hr").value||"",
+  const sess={ id:LOGGER.sessionId||uid("s"), type:"hardlopen", datum:el("lg_datum")?.value||LOGGER.datum||todayISO(), slot:LOGGER.slotId,
+    km, tijd, tempo:calcTempo(km,tijd), looptype:LOGGER.looptype, hr:el("lg_hr")?.value||"",
     duur: tijd||Math.round(km*6.2), intensiteit:LOGGER.intensiteit||"laag", rpe:"", ...readRecovery(), created:nowMs() };
   commitSession(sess, LOGGER.sessionId, LOGGER.slotId); closeModal();
 }
@@ -1583,10 +1628,10 @@ function openHiitLogger(slotId){
   syncIntens();
 }
 function saveHiitSession(){
-  const duur=num(el("lg_duur").value);
+  const duur=num(el("lg_duur")?.value);
   if(!duur){ toast("🤔","Vul de duur in."); return; }
-  const sess={ id:LOGGER.sessionId||uid("s"), type:"hiit", datum:el("lg_datum").value, slot:LOGGER.slotId,
-    omschrijving:el("lg_oms").value.trim()||LOGGER.classLabel||"Klasje", duur, rpe:el("lg_rpe").value||"",
+  const sess={ id:LOGGER.sessionId||uid("s"), type:"hiit", datum:el("lg_datum")?.value||LOGGER.datum||todayISO(), slot:LOGGER.slotId,
+    omschrijving:(el("lg_oms")?.value||"").trim()||LOGGER.classLabel||"Klasje", duur, rpe:el("lg_rpe")?.value||"",
     intensiteit:LOGGER.intensiteit||"hoog", ...readRecovery(), created:nowMs() };
   commitSession(sess, LOGGER.sessionId, LOGGER.slotId); closeModal();
 }
@@ -1609,23 +1654,33 @@ function openPadelLogger(){
   syncIntens();
 }
 function savePadelSession(){
-  const duur=num(el("lg_duur").value);
+  const duur=num(el("lg_duur")?.value);
   if(!duur){ toast("🤔","Vul je speeltijd (minuten) in."); return; }
-  const sess={ id:uid("s"), type:"padel", datum:el("lg_datum").value, slot:null,
-    duur, rpe:el("lg_rpe").value||"", intensiteit:LOGGER.intensiteit||"matig", ...readRecovery(), created:nowMs() };
+  const sess={ id:uid("s"), type:"padel", datum:el("lg_datum")?.value||LOGGER.datum||todayISO(), slot:null,
+    duur, rpe:el("lg_rpe")?.value||"", intensiteit:LOGGER.intensiteit||"matig", ...readRecovery(), created:nowMs() };
   commitSession(sess, null, null); closeModal();
 }
 
 /* ============================================================
    SESSIE COMMIT — opslaan, slot afvinken, pootjes
    ============================================================ */
+/* herrekenbare beloning = alleen de duur/intensiteit-afhankelijke delen (basis + perk + lange-sessie).
+   Eenmalige bonussen (PR, afstand-grens, variatie, streak-7) en bijeffecten (ei, blijheid, quests)
+   zitten er NIET in, zodat een sessie-edit die niet opnieuw toekent. */
+function recomputableReward(s){
+  const base=sessPootjesBase(s);
+  const pm=pootjesMultiplier(s, {gymPR:false});
+  const perkBonus=Math.round(base*(pm.m-1));
+  const lange=num(s.duur)>=60?25:0;
+  return base+perkBonus+lange;
+}
 function commitSession(sess, existingId, slotId){
   const isUpdate=!!existingId;
   if(isUpdate){
     const i=S.sessions.findIndex(s=>s.id===existingId);
     const old = i>=0 ? S.sessions[i] : null;
-    // verdiende Pootjes behouden en alleen het basis-verschil verrekenen als duur/intensiteit wijzigde
-    const diff = sessPootjesBase(sess) - (old ? sessPootjesBase(old) : 0);
+    // eenmalige bonussen behouden; alleen de herrekenbare beloning (basis + perk + lange-sessie) opnieuw verrekenen
+    const diff = recomputableReward(sess) - (old ? recomputableReward(old) : 0);
     sess.pootjesVerdiend = Math.max(0, (old ? (old.pootjesVerdiend||0) : 0) + diff);
     if(diff) addPootjes(diff, "sessie-correctie");
     if(i>=0) S.sessions[i]=sess; else S.sessions.push(sess);
@@ -1739,6 +1794,11 @@ function renderProteinModal(){
         <button onclick="removeMeal('${m.id}')" title="weg" style="background:none;border:none;color:var(--mut);cursor:pointer;font-size:15px">✕</button>
       </div>`).join("") : `<div class="cardsub" style="margin:0">Nog geen maaltijden — voeg er een toe 👇</div>`}
     </div>
+    ${(S.profile.aiKey||S.profile.aiEndpoint)?`<div class="fl" style="margin-top:2px">✨ Laat AI het eiwit schatten</div>
+    <div class="frow c1" style="margin-bottom:6px"><div class="field"><label>Wat heb je gegeten?</label><input id="pr_ai" placeholder="bv. 150 g kip, 2 eieren en een bakje kwark" onkeydown="if(event.key==='Enter'){event.preventDefault();estimateProteinAI();}"></div></div>
+    <button id="pr_ai_btn" class="btn ghost block" type="button" onclick="estimateProteinAI()" style="margin-bottom:6px">✨ Schat het eiwit</button>
+    <div class="cardsub" style="margin:0 0 12px">De schatting verschijnt in de velden hieronder — check het en tik op toevoegen.</div>`
+    :`<div class="cardsub" style="margin:2px 0 12px;opacity:.9">✨ Tip: verbind je AI-coach bij Logboek → instellingen om automatisch het eiwit te laten schatten uit wat je at.</div>`}
     <div class="frow c1" style="margin-bottom:8px"><div class="field"><label>Kies snel een maaltijd</label>
       <select id="pr_preset" onchange="proteinPreset()">
         <option value="">— kies uit de lijst (of typ zelf) —</option>
@@ -1775,6 +1835,34 @@ function removeMeal(id){
   save(); refreshChrome(); renderProteinModal();
 }
 function saveProteinNote(){ const d=todayISO(); if(S.protein[d]&&el("pr_note")) S.protein[d].notitie=el("pr_note").value.trim(); save(); }
+/* AI-eiwitschatter: Bo typt wat ze at → AI schat de grammen → vult de maaltijd-velden (ze checkt + voegt toe) */
+async function estimateProteinAI(){
+  const inp=el("pr_ai"); if(!inp) return;
+  const tekst=inp.value.trim();
+  if(!tekst){ toast("🤔","Typ eerst wat je hebt gegeten."); return; }
+  if(!S.profile.aiKey && !S.profile.aiEndpoint){ toast("🔑","Verbind eerst je AI-coach bij Logboek → instellingen om dit te gebruiken."); return; }
+  const btn=el("pr_ai_btn");
+  if(btn){ btn.disabled=true; btn.textContent="✨ Schatten…"; }
+  try{
+    const sys="Je bent een nuchtere voedingsassistent. De gebruiker beschrijft in het Nederlands wat ze heeft gegeten. Schat het TOTALE aantal gram EIWIT (proteïne) zo goed mogelijk op basis van gangbare porties; ga bij een onduidelijke hoeveelheid uit van een normale portie. Antwoord UITSLUITEND met één JSON-object, zonder tekst eromheen: {\"naam\": string (korte NL-samenvatting van de maaltijd, max ~40 tekens), \"eiwit_gram\": number (heel getal)}. Kun je het echt niet inschatten, gebruik dan eiwit_gram 0.";
+    const raw=await aiRaw(sys, tekst, 150);
+    if(raw==null){ toast("🔑","Verbind eerst je AI-coach bij Logboek → instellingen."); return; }
+    let m=String(raw).replace(/```json|```/g,""); const a=m.indexOf("{"), b=m.lastIndexOf("}");
+    let obj=null; if(a>=0&&b>=0){ try{ obj=JSON.parse(m.slice(a,b+1)); }catch(_){} }
+    if(!obj || !isNum(obj.eiwit_gram)){ toast("🤔","Kon het eiwit niet inschatten — probeer het iets concreter."); return; }
+    const gram=Math.max(0, Math.round(num(obj.eiwit_gram)));
+    const naam=(obj.naam||tekst).toString().slice(0,60);
+    if(el("pr_naam")) el("pr_naam").value=naam;
+    if(el("pr_gram")) el("pr_gram").value=gram;
+    if(el("pr_preset")) el("pr_preset").value="";
+    toast("✨", `Geschat: ~${gram} g eiwit — check het en tik op toevoegen.`, "good");
+    if(el("pr_gram")) el("pr_gram").focus();
+  }catch(e){
+    toast("⚠️","De schatter is even niet bereikbaar — probeer het zo nog eens.");
+  }finally{
+    if(el("pr_ai_btn")){ el("pr_ai_btn").disabled=false; el("pr_ai_btn").textContent="✨ Schat het eiwit"; }
+  }
+}
 function openCycleLogger(){
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
     <h2>🌸 Cyclus loggen</h2><div class="msub">Leg de startdatum van je menstruatie vast. De engine past je advies hierop zacht aan. Alles blijft lokaal.</div>
@@ -1928,7 +2016,9 @@ function adviseExercise(exId, tdef){
       ? {text:`Top — alle sets vol! Probeer ${nk?fmt(nk,2)+" kg":"+2,5 kg"} (+${fmt(step,2)}). 💪`, suggestKg:nk}
       : {text:`Alles gehaald! Probeer ${nk?fmt(nk,2)+" kg":"+1,25 kg"} (+${fmt(step,2)}) of +2 reps.`, suggestKg:nk};
   }
-  if(rpe!==null && rpe>=9) return {text:`Vorige keer pittig (RPE ${rpe}). Houd ${fmt(working,2)} kg aan, mik op dezelfde reps met betere techniek.`, suggestKg:working, hold:true};
+  if(rpe!==null && rpe>=9) return working>0
+    ? {text:`Vorige keer pittig (RPE ${rpe}). Houd ${fmt(working,2)} kg aan, mik op dezelfde reps met betere techniek.`, suggestKg:working, hold:true}
+    : {text:`Vorige keer pittig (RPE ${rpe}). Houd hetzelfde aan, mik op dezelfde reps met betere techniek.`, suggestKg:null, hold:true};
   return {text:`Houd ${working?fmt(working,2)+" kg":"hetzelfde"} aan en pak het volledige repbereik (tot ${hi} reps).`, suggestKg:working, hold:true};
 }
 
@@ -2473,6 +2563,7 @@ const MILESTONES = [
   {id:"ms_run_15k", soort:"pegasus", icon:"🪽", naam:"15 km hardlopen", check:()=>longestRun()>=15, story:"15 kilometer! De legendarische Pegasus spreidt z'n vleugels voor je. 🪽"},
   {id:"ms_half_marathon", soort:"feniks", icon:"🔥", naam:"Halve marathon (21 km)", check:()=>longestRun()>=21, story:"Een halve marathon — 21 kilometer! De feniks herrijst voor deze heldendaad. 🔥"},
   {id:"ms_10k_total", soort:null, badge:"tien_km", icon:"🏃‍♀️", naam:"10 km totaal", check:()=>sum(runHistory(),s=>s.km)>=10},
+  // NB: id "ms_hipthrust_80" is historisch (was ooit 80 kg) — drempel is nu 6×25 kg. Niet hernoemen: de id staat in opgeslagen milestonesHit.
   {id:"ms_hipthrust_80", soort:"leeuw", icon:"🦁", naam:"Hip thrust 6×25 kg", check:()=>gymSessionsWith("hip_thrust").some(s=>(s.oefeningen||[]).some(o=>o.exId==="hip_thrust"&&(o.sets||[]).some(st=>num(st.kg)>=25&&num(st.reps)>=6))), story:"Je drukte de hip thrust naar 6 × 25 kg! De leeuw brult mee. 🦁"},
   {id:"ms_hipthrust_40", soort:"gorilla", icon:"🦍", naam:"Hip thrust 6×40 kg", check:()=>gymSessionsWith("hip_thrust").some(s=>(s.oefeningen||[]).some(o=>o.exId==="hip_thrust"&&(o.sets||[]).some(st=>num(st.kg)>=40&&num(st.reps)>=6))), story:"Zes keer 40 kilo omhoog — de gorilla klopt trots op z'n borst voor jouw kracht. 🦍"},
   {id:"ms_hipthrust_50", soort:"neushoorn", icon:"🦏", naam:"Hip thrust 6×50 kg", check:()=>gymSessionsWith("hip_thrust").some(s=>(s.oefeningen||[]).some(o=>o.exId==="hip_thrust"&&(o.sets||[]).some(st=>num(st.kg)>=50&&num(st.reps)>=6))), story:"Zes keer 50 kilo omhoog — onstuitbaar als een neushoorn. 🦏"},
@@ -2800,10 +2891,13 @@ function recordSteps(steps, dateISO, opts){
   cur.pootjesAwarded=totalStepPootjes;
   if(deltaPootjes) addPootjes(deltaPootjes, "stappen");
   const newPootjes=Math.max(0, deltaPootjes);   // alleen positief tonen in de toast
-  // uitbroeden: stappen-verschil = broed-voortgang (signed → omlaag-correctie telt ook terug, geclamped op 0)
-  const delta=cur.steps-(cur.hatchCounted||0);
-  cur.hatchCounted=cur.steps;
-  S.game.broedStappen=Math.max(0,(S.game.broedStappen||0)+delta);
+  // uitbroeden: stappen-verschil = broed-voortgang. Omhoog telt volledig mee; een omlaag-correctie
+  // neemt alleen nog-gebufferde (niet-uitgebroede) voortgang terug, zodat ze nooit een al uitgebroed
+  // dier terugdraait of de broed-voortgang van andere dagen wegvreet.
+  const rawDelta=cur.steps-(cur.hatchCounted||0);
+  const broedDelta = rawDelta<0 ? -Math.min(-rawDelta, S.game.broedStappen||0) : rawDelta;
+  cur.hatchCounted=(cur.hatchCounted||0)+broedDelta;
+  S.game.broedStappen=Math.max(0,(S.game.broedStappen||0)+broedDelta);
   // dagdoel stappen 100% → alle dieren +5 (1×/dag)
   const stTgt=stepTarget();
   if(stTgt && cur.steps>=stTgt && !cur.goalBoosted){ cur.goalBoosted=true; boostAllAnimals(HAPPY_HABIT_BOOST); }
@@ -2900,6 +2994,7 @@ function addStepsManually(){
 /* ---- eieren met pity ---- */
 function eggPool(){ return ANIMAL_IDS.filter(id=>ANIMALS[id].viaEi && zoneReady(id)); }   // alleen dieren waarvan het verblijf al vrijgespeeld is
 function pickByRarity(pool, rarity){
+  if(!pool||!pool.length) return null;
   const c=pool.filter(id=>ANIMALS[id].rarity===rarity);
   if(!c.length) return pool[(Math.random()*pool.length)|0];
   const fresh=c.filter(id=>!discovered(id)); const arr=fresh.length?fresh:c;
@@ -2907,9 +3002,10 @@ function pickByRarity(pool, rarity){
 }
 function hatchOneEgg(){
   const g=S.game; if((g.eieren||0)<=0) return null;
+  const pool=eggPool(); if(!pool.length) return null;   // niets vrijgespeeld om te broeden (kan in praktijk niet, home is altijd ready)
   g.eieren--; g.totaalEierenUit=(g.totaalEierenUit||0)+1; g.pityTeller=(g.pityTeller||0)+1;
   grantBadge("eerste_ei");
-  const pool=eggPool(); let soort;
+  let soort;
   const guaranteed=g.pityTeller>=8, roll=Math.random();
   if(guaranteed||roll<0.06) soort=pickByRarity(pool,"legendarisch");
   else if(roll<0.32) soort=pickByRarity(pool,"zeldzaam");
@@ -3023,6 +3119,8 @@ function recentRecovery(){
   return { verm:avgOf(recent,e=>e.vermoeidheid), pijn:avgOf(recent,e=>e.spierpijn), slaap:avgOf(recent,e=>e.slaapuren) };
 }
 function dotColor(v,lowGood){ if(v==null) return "var(--mut)"; if(lowGood) return v<=4?"var(--mint)":v<=6.5?"var(--amber)":"var(--red)"; return v>=7?"var(--mint)":v>=6?"var(--amber)":"var(--red)"; }
+/* woord-cue naast de kleur (niet op kleur alleen leunen) */
+function dotWord(v,lowGood){ if(v==null) return ""; if(lowGood) return v<=4?"laag":v<=6.5?"matig":"hoog"; return v>=7?"goed":v>=6?"matig":"kort"; }
 
 function proteinCard(){
   const d=todayISO();
@@ -3108,7 +3206,7 @@ function renderVandaag(){
   const adv=slot?slotAdvies(slot):null;
   const signals=(wk.uitleg||[]).slice(0,2);
   const stGap = g.streakLaatste ? daysBetween(g.streakLaatste, todayISO()) : null;
-  const streakRisk = g.streakDagen>=2 && stGap!=null && stGap>=2 && stGap<=3;   // nog te redden vandaag, maar bijna weg
+  const streakRisk = g.streakDagen>=2 && stGap===2;   // laatste dag om de reeks te redden (train je vandaag niet, dan breekt hij morgen)
 
   el("tab-vandaag").innerHTML=`
     <div class="welcome">Hoi <span class="em">${esc(p.naam||"Bo")}</span>! 🍑</div>
@@ -3122,7 +3220,7 @@ function renderVandaag(){
       <div class="kpi g-pink"><div class="klab">Deze week</div><div class="kbig">${done}<small>/ 5</small></div><div class="kfoot">${done>=5?"vol! 🎉":"sessies gedaan"}</div></div>
       <div class="kpi g-rose"><div class="klab">🐾 Pootjes</div><div class="kbig">${fmt(g.pootjes)}</div><div class="kfoot">zoo-munt</div></div>
       <div class="kpi g-lila"><div class="klab">🔥 Reeks</div><div class="kbig">${g.streakDagen}<small>dgn</small></div><div class="kfoot">${g.streakDagen>0?"blijf knallen":"start vandaag"}</div></div>
-      <div class="kpi g-mint"><div class="klab">⚖️ Gewicht</div><div class="kbig">${cur!=null?fmtKg(cur):"—"}<small>kg</small></div><div class="kfoot">${p.streefGewicht!=null?("doel "+fmtKg(p.streefGewicht)):"stel doel in"}</div></div>
+      <div class="kpi g-mint"><div class="klab">⚖️ Gewicht</div><div class="kbig">${cur!=null?fmtKg(cur):"—"}<small>kg</small></div><div class="kfoot">${cur==null?"weeg jezelf":(p.streefGewicht!=null?("doel "+fmtKg(p.streefGewicht)):"stel doel in")}</div></div>
     </div>
 
     <div class="row r-2-1">
@@ -3149,9 +3247,9 @@ function renderVandaag(){
         <div class="charttitle"><h3><span class="ic">⚡</span>Belasting &amp; herstel</h3></div>
         <div class="statline">
           <div class="miniStat"><div class="ms-l"><div class="ms-ic p">🔥</div><div class="ms-lab">Belasting deze week</div></div><div class="ms-val">${fmt(weekLoad)}<small> pt</small></div></div>
-          <div class="miniStat"><div class="ms-l"><div class="ms-ic a">😮‍💨</div><div class="ms-lab">Vermoeidheid</div></div><div class="ms-val" style="color:${dotColor(rec.verm,true)}">${rec.verm?rec.verm.toFixed(1):"—"}</div></div>
-          <div class="miniStat"><div class="ms-l"><div class="ms-ic r">🦵</div><div class="ms-lab">Spierpijn</div></div><div class="ms-val" style="color:${dotColor(rec.pijn,true)}">${rec.pijn?rec.pijn.toFixed(1):"—"}</div></div>
-          <div class="miniStat"><div class="ms-l"><div class="ms-ic m">😴</div><div class="ms-lab">Slaap</div></div><div class="ms-val" style="color:${dotColor(rec.slaap,false)}">${rec.slaap?rec.slaap.toFixed(1):"—"}<small> u</small></div></div>
+          <div class="miniStat"><div class="ms-l"><div class="ms-ic a">😮‍💨</div><div class="ms-lab">Vermoeidheid</div></div><div class="ms-val" style="color:${dotColor(rec.verm,true)}">${rec.verm?`${rec.verm.toFixed(1)} <span style="font-size:10.5px;font-weight:700">${dotWord(rec.verm,true)}</span>`:"—"}</div></div>
+          <div class="miniStat"><div class="ms-l"><div class="ms-ic r">🦵</div><div class="ms-lab">Spierpijn</div></div><div class="ms-val" style="color:${dotColor(rec.pijn,true)}">${rec.pijn?`${rec.pijn.toFixed(1)} <span style="font-size:10.5px;font-weight:700">${dotWord(rec.pijn,true)}</span>`:"—"}</div></div>
+          <div class="miniStat"><div class="ms-l"><div class="ms-ic m">😴</div><div class="ms-lab">Slaap</div></div><div class="ms-val" style="color:${dotColor(rec.slaap,false)}">${rec.slaap?`${rec.slaap.toFixed(1)}<small> u</small> <span style="font-size:10.5px;font-weight:700">${dotWord(rec.slaap,false)}</span>`:"—"}</div></div>
         </div>
       </div>
     </div>
@@ -3291,6 +3389,31 @@ function aiCoachCard(){
   </div>`;
 }
 const COACH_SYS = "Je bent BBB, de persoonlijke fitnesscoach van Bo: warm, positief, nuchter en motiverend. Schrijf in het Nederlands, af en toe een 🍑 of 💪.";
+/* fetch met timeout — een hangende endpoint laat de coach niet oneindig "denken" */
+function fetchWithTimeout(url, opts, ms){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(), ms||40000);
+  return fetch(url, {...opts, signal:ctrl.signal}).finally(()=>clearTimeout(t));
+}
+/* bouwt de Anthropic-request (direct met eigen sleutel, of via proxy-endpoint), doet de call met
+   timeout en geeft de antwoordtekst terug of gooit — gedeeld door runAICoach + aiRaw. */
+async function aiRequest(sys, userContent, maxTokens){
+  const p=S.profile;
+  const direct = !p.aiEndpoint && !!p.aiKey;   // native: sleutel op toestel → rechtstreeks naar Anthropic
+  const body = { model: p.aiModel||"claude-haiku-4-5", max_tokens: maxTokens||500, system: sys, messages:[{role:"user", content: userContent}] };
+  let url, headers;
+  if(direct){
+    url = "https://api.anthropic.com/v1/messages";
+    headers = {"content-type":"application/json","x-api-key":p.aiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
+  } else {
+    url = p.aiEndpoint; headers = {"Content-Type":"application/json"};
+    if(p.aiKey){ headers["x-api-key"]=p.aiKey; headers["anthropic-version"]="2023-06-01"; }
+  }
+  const res = await fetchWithTimeout(url, {method:"POST", headers, body: JSON.stringify(body)}, 40000);
+  if(!res.ok){ let d=""; try{ const ej=await res.json(); if(ej&&ej.error&&ej.error.message) d=" — "+ej.error.message; }catch(_){} throw new Error("HTTP "+res.status+d); }
+  const data = await res.json();
+  return String((data.content&&data.content[0]&&data.content[0].text) || data.completion || data.text || "");
+}
 async function runAICoach(sys, userContent, resultTitle){
   const p=S.profile;
   const direct = !p.aiEndpoint && !!p.aiKey; // native app: sleutel staat op toestel → rechtstreeks naar Anthropic
@@ -3298,28 +3421,16 @@ async function runAICoach(sys, userContent, resultTitle){
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>🤖 Je coach denkt na…</h2>
     <div style="text-align:center;padding:24px"><div style="font-size:40px;animation:bob 1s infinite">🐾</div><div class="cardsub" style="margin-top:10px">Even geduld…</div></div>`);
   try{
-    const model = p.aiModel||"claude-haiku-4-5";
-    const body = { model, max_tokens: 700, system: sys, messages:[{role:"user", content: userContent}] };
-    let url, headers;
-    if(direct){
-      url = "https://api.anthropic.com/v1/messages";
-      headers = {"content-type":"application/json","x-api-key":p.aiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
-    } else {
-      url = p.aiEndpoint; headers = {"Content-Type":"application/json"};
-      if(p.aiKey){ headers["x-api-key"]=p.aiKey; headers["anthropic-version"]="2023-06-01"; }
-    }
-    const res = await fetch(url, {method:"POST", headers, body: JSON.stringify(body)});
-    if(!res.ok){ let d=""; try{ const ej=await res.json(); if(ej&&ej.error&&ej.error.message) d=" — "+ej.error.message; }catch(_){} throw new Error("HTTP "+res.status+d); }
-    const data = await res.json();
-    const text = (data.content&&data.content[0]&&data.content[0].text) || data.completion || data.text || data.message || (typeof data==="string"?data:"");
-    if(!text || !text.trim()){ closeModal(); toast("🤔","De coach gaf een leeg antwoord — probeer het zo nog eens."); return; }
+    const text = await aiRequest(sys, userContent, 700);
+    if(!text.trim()){ closeModal(); toast("🤔","De coach gaf een leeg antwoord — probeer het zo nog eens."); return; }
     openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>🤖 ${resultTitle}</h2>
       <div style="white-space:pre-wrap;font-size:14px;line-height:1.6;background:var(--bg-soft);border:1px solid var(--line);border-radius:13px;padding:14px;max-height:50vh;overflow:auto">${esc(text)}</div>
       <div class="factions" style="margin-top:12px"><button class="btn ghost" onclick="closeModal()">Sluiten</button></div>`, true);
   }catch(e){
+    const msg = e.name==="AbortError" ? "de coach reageerde niet op tijd (timeout)" : (e.message||"onbekende fout");
     const hint = direct ? "Controleer je Claude API-sleutel bij Logboek → instellingen (begint met sk-ant-…) en of je tegoed hebt." : "Controleer de proxy-endpoint-URL in instellingen.";
     openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button><h2>🤖 Coach niet bereikbaar</h2>
-      <div class="msub">Er ging iets mis (${esc(e.message)}). ${hint} Je kunt altijd de samenvatting kopiëren en in een Claude-chat plakken.</div>
+      <div class="msub">Er ging iets mis (${esc(msg)}). ${hint} Je kunt altijd de samenvatting kopiëren en in een Claude-chat plakken.</div>
       <div class="factions"><button class="btn" onclick="closeModal();copyForClaude()">📋 Kopieer voor Claude</button><button class="btn ghost" onclick="closeModal()">Sluiten</button></div>`);
   }
 }
@@ -3340,22 +3451,8 @@ async function askAICoachQuestion(){
 /* ---- AI low-level call (geen UI; geeft tekst terug of gooit) ---- */
 async function aiRaw(sys, userContent, maxTokens){
   const p=S.profile;
-  const direct = !p.aiEndpoint && !!p.aiKey;
   if(!p.aiEndpoint && !p.aiKey) return null;
-  const model = p.aiModel||"claude-haiku-4-5";
-  const body = { model, max_tokens: maxTokens||500, system: sys, messages:[{role:"user", content: userContent}] };
-  let url, headers;
-  if(direct){
-    url="https://api.anthropic.com/v1/messages";
-    headers={"content-type":"application/json","x-api-key":p.aiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"};
-  } else {
-    url=p.aiEndpoint; headers={"Content-Type":"application/json"};
-    if(p.aiKey){ headers["x-api-key"]=p.aiKey; headers["anthropic-version"]="2023-06-01"; }
-  }
-  const res=await fetch(url,{method:"POST",headers,body:JSON.stringify(body)});
-  if(!res.ok) throw new Error("HTTP "+res.status);
-  const data=await res.json();
-  return (data.content&&data.content[0]&&data.content[0].text)||data.completion||data.text||"";
+  return await aiRequest(sys, userContent, maxTokens);
 }
 
 /* ---- AI-hardloop/HIIT-planner: past automatisch de loop- en HIIT-blokken aan (gym blijft vast) ----
@@ -3397,7 +3494,7 @@ async function maybePlanRunHiitWithAI(){
     if(!runSlots.length) return;
     const lr=longestRun();
     const longCeil = lr>0 ? Math.round(Math.min(lr+0.5, lr*1.10)*2)/2 : 5;   // zelfde veilige stap als de formule
-    const shortCap = Math.max(5, Math.round(lr*0.7*2)/2);
+    const shortCap = Math.max(2, Math.min(lr>0?lr:5, longCeil));   // korte/rustige loop nooit boven het huidige niveau of de veilige bovengrens
     const txt = await aiRaw(RUN_PLAN_SYS, runHiitContext(runSlots, longCeil), 450);
     if(!txt) return;
     let m=txt.replace(/```json|```/g,""); const a=m.indexOf("{"), b=m.lastIndexOf("}");
@@ -3465,7 +3562,6 @@ function paceFmt(sec){ if(!sec) return "—"; const m=Math.floor(sec/60), s=Math
 function lastNWeeks(n){ const out=[]; const m=thisMonday(); for(let i=n-1;i>=0;i--) out.push(addDays(m,-7*i)); return out; }
 function runKmByWeek(){ const by={}; runHistory().forEach(s=>{ const m=mondayOf(s.datum); by[m]=(by[m]||0)+num(s.km); }); return by; }
 function paceSeries(){ return runHistory().filter(s=>s.km>=1&&s.tijd).map(s=>({datum:s.datum, pace:(s.tijd*60)/s.km})); }
-function proteinTargetForDay(){ return proteinTarget(); }
 function proteinDayHit(d){ const pr=S.protein[d]; if(!pr) return false; const tgt=proteinTarget(); return !!(pr.gehaald || (tgt && proteinDayTotal(d)>=tgt)); }
 function proteinWeekly(){ const by={}; Object.keys(S.protein).forEach(d=>{ const m=mondayOf(d); by[m]=by[m]||0; if(proteinDayHit(d)) by[m]++; }); return by; }
 
@@ -4400,7 +4496,7 @@ function openMilestoneModal(ms){
     </div>`);
 }
 /* ---- event-check ---- */
-function isEventActive(id){ const a=ANIMALS[id]; if(!a.event) return true; const mnd=MND_NL[new Date().getMonth()]; return a.event===["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"][new Date().getMonth()]; }
+function isEventActive(id){ const a=ANIMALS[id]; if(!a||!a.event) return true; return a.event===MND_NL[new Date().getMonth()]; }
 
 /* ---- snapshot ---- */
 function buildZooSceneSVG(W,H){
@@ -4470,7 +4566,7 @@ function renderLogboek(){
       <h3><span class="ic">🌸</span>Cyclus (privé, optioneel)</h3>
       <div class="cardsub">Aan/uit. Helpt de engine je advies zacht aan te passen. Alles blijft lokaal.</div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div class="toggle ${p.cyclusAan?"on":""}" id="set_cyclusToggle" onclick="toggleCyclus()"></div>
+        <div class="toggle ${p.cyclusAan?"on":""}" id="set_cyclusToggle" role="switch" tabindex="0" aria-checked="${p.cyclusAan?"true":"false"}" aria-label="Cyclus bijhouden" onclick="toggleCyclus()"></div>
         <span style="font-size:13.5px;color:var(--dim)">Cyclus-tracking ${p.cyclusAan?"aan":"uit"}</span>
       </div>
       <div id="cyclusFields" style="${p.cyclusAan?"":"display:none"}">
@@ -4491,11 +4587,11 @@ function renderLogboek(){
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px">
-        <div class="toggle ${p.geluid?"on":""}" id="set_geluidToggle" onclick="toggleGeluid()"></div>
+        <div class="toggle ${p.geluid?"on":""}" id="set_geluidToggle" role="switch" tabindex="0" aria-checked="${p.geluid?"true":"false"}" aria-label="Feest-geluid" onclick="toggleGeluid()"></div>
         <span style="font-size:13.5px;color:var(--dim)">Feest-geluid bij successen ${p.geluid?"aan":"uit"}</span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-        <div class="toggle ${p.notifs?"on":""}" id="set_notifsToggle" onclick="this.classList.toggle('on');toggleNotifs(this.classList.contains('on'))"></div>
+        <div class="toggle ${p.notifs?"on":""}" id="set_notifsToggle" role="switch" tabindex="0" aria-checked="${p.notifs?"true":"false"}" aria-label="Dagelijkse herinnering" onclick="this.classList.toggle('on');toggleNotifs(this.classList.contains('on'))"></div>
         <span style="font-size:13.5px;color:var(--dim)">Dagelijkse beweeg-herinnering 🔔 (alleen in de geïnstalleerde app)</span>
       </div>
     </div>
@@ -4669,7 +4765,7 @@ function startOnboarding(){
       <div class="field"><label>Dagelijks stappendoel</label><input id="ob_stappenDoel" type="number" inputmode="numeric" value="${p.stappenDoel??10000}" placeholder="10000"></div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin:4px 0 14px">
-      <div class="toggle ${p.cyclusAan?"on":""}" id="ob_cyclusToggle" onclick="this.classList.toggle('on')"></div>
+      <div class="toggle ${p.cyclusAan?"on":""}" id="ob_cyclusToggle" role="switch" tabindex="0" aria-checked="${p.cyclusAan?"true":"false"}" aria-label="Cyclus bijhouden" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:13.5px;color:var(--dim)">Cyclus-tracking gebruiken (privé, kan later)</span>
     </div>
     <div class="msub" style="margin-bottom:14px">💡 Tip: gewicht is maar één signaal. We focussen vooral op zwaarder tillen, lekker lopen en consistent zijn. Geen strenge diëten hier, want Botje kan zo lekker eten ☺️</div>
@@ -4789,6 +4885,7 @@ function init(){
   sanitizeZones();
   ensureAnimalSports();
   applyHappinessDecay();
+  refreshStreak();
   computeZooLevel();
   checkMilestones();
   checkStepUrl();
