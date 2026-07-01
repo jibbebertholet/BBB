@@ -645,7 +645,7 @@ function renderTab(tab){
   if(tab==="vandaag") renderVandaag();
   else if(tab==="week") renderWeek();
   else if(tab==="voortgang") renderVoortgang();
-  else if(tab==="zoo") renderZoo();
+  else if(tab==="zoo"){ zooShuffle(); renderZoo(); }
   else if(tab==="logboek") renderLogboek();
 }
 document.querySelectorAll("#tabs, #botnav").forEach(nav=>{
@@ -1021,7 +1021,7 @@ function updateStreak(datum){
   if(!g.streakLaatste){ g.streakDagen=1; g.streakLaatste=datum; return; }
   const gap=daysBetween(g.streakLaatste, datum);
   if(gap<=0) return; // terug-gedateerde sessie: anker niet achteruit schuiven
-  if(gap<=3){ g.streakDagen+=1; } // tot 2 rustdagen ertussen = geen breuk
+  if(gap<=2){ g.streakDagen+=1; } // max 1 rustdag ertussen = geen breuk
   else { g.streakDagen=1; }
   g.streakLaatste=datum;
 }
@@ -2324,68 +2324,68 @@ function creatureSVG(cfg, opts){
    ============================================================ */
 const ANIMALS = {
   // ---- GEWOON ----
-  konijn:{naam:"Konijn", rarity:"gewoon", prijs:140, viaEi:true, weetje:"Konijnen maken vreugdesprongen die 'binky' heten.", cfg:{body:"#b8a99b",belly:"#eee7dd",ear:"#a89a8c",ears:"bunny",tail:"stub",tailTip:"#eee7dd",accent:"#6f6256"}},
-  kat:{naam:"Kat", rarity:"gewoon", prijs:160, viaEi:true, weetje:"Een spinnende kat trilt op een frequentie die heling stimuleert.", cfg:{body:"#9a8d80",belly:"#cfc6bc",ear:"#897c70",ears:"cat",tail:"curl",extras:["whiskers"],accent:"#5c5046"}},
-  eend:{naam:"Eend", rarity:"gewoon", prijs:150, viaEi:true, weetje:"Eenden hebben waterdichte veren dankzij een speciale olie.", cfg:{plan:"bird",body:"#a98a5a",belly:"#e6dcc4",beakCol:"#e8a23a",legCol:"#e8a23a",accent:"#6a5430"}},
-  muis:{naam:"Muis", rarity:"gewoon", prijs:120, viaEi:true, weetje:"Muizen kunnen door een gat zo groot als een pen.", cfg:{body:"#a59c94",belly:"#d8d2cc",ear:"#988f86",ears:"round",tail:"long",nose:"#4a4038",accent:"#6a625a"}},
-  kuiken:{naam:"Kuiken", rarity:"gewoon", prijs:130, viaEi:true, weetje:"Kuikens praten al met hun moeder vóór ze uit het ei komen.", cfg:{plan:"bird",body:"#f1cf4a",belly:"#ffe79a",beakCol:"#ef9f2e",legCol:"#ef9f2e",accent:"#c79a1e"}},
-  egel:{naam:"Egel", rarity:"gewoon", prijs:170, viaEi:true, weetje:"Een egel heeft zo'n 7.000 stekels.", cfg:{body:"#9a8268",belly:"#d8c8b2",ear:"#83705a",ears:"tiny",tail:"none",extras:["quills"],accent:"#5a4632"}},
-  eekhoorn:{naam:"Eekhoorn", rarity:"gewoon", prijs:165, viaEi:true, weetje:"Een eekhoorn vergeet waar 'ie z'n nootjes verstopt — en plant zo hele bossen.", cfg:{body:"#b06a38",belly:"#ecdcc6",ear:"#965426",ears:"up",tail:"bush",tailTip:"#ecdcc6",accent:"#6a3c1e"}},
-  hamster:{naam:"Hamster", rarity:"gewoon", prijs:135, viaEi:true, weetje:"Een hamster propt z'n wangen tot wel 3× z'n kopgrootte vol.", cfg:{body:"#caa56a",belly:"#f0e2c4",ear:"#b88f4e",ears:"round",tail:"stub",accent:"#7a5a2e"}},
-  zebraveulen:{naam:"Zebraveulen", rarity:"gewoon", prijs:175, viaEi:true, weetje:"Een pasgeboren zebraveulen staat al na een uur op z'n pootjes.", cfg:{body:"#efe6d6",belly:"#fbf5ea",ear:"#d8cbb4",ears:"up",tail:"stub",extras:["stripesBody"],accent:"#8a7a5e"}},
+  konijn:{naam:"Konijn", rarity:"gewoon", prijs:180, viaEi:true, weetje:"Konijnen maken vreugdesprongen die 'binky' heten.", cfg:{body:"#b8a99b",belly:"#eee7dd",ear:"#a89a8c",ears:"bunny",tail:"stub",tailTip:"#eee7dd",accent:"#6f6256"}},
+  kat:{naam:"Kat", rarity:"gewoon", prijs:200, viaEi:true, weetje:"Een spinnende kat trilt op een frequentie die heling stimuleert.", cfg:{body:"#9a8d80",belly:"#cfc6bc",ear:"#897c70",ears:"cat",tail:"curl",extras:["whiskers"],accent:"#5c5046"}},
+  eend:{naam:"Eend", rarity:"gewoon", prijs:190, viaEi:true, weetje:"Eenden hebben waterdichte veren dankzij een speciale olie.", cfg:{plan:"bird",body:"#a98a5a",belly:"#e6dcc4",beakCol:"#e8a23a",legCol:"#e8a23a",accent:"#6a5430"}},
+  muis:{naam:"Muis", rarity:"gewoon", prijs:160, viaEi:true, weetje:"Muizen kunnen door een gat zo groot als een pen.", cfg:{body:"#a59c94",belly:"#d8d2cc",ear:"#988f86",ears:"round",tail:"long",nose:"#4a4038",accent:"#6a625a"}},
+  kuiken:{naam:"Kuiken", rarity:"gewoon", prijs:170, viaEi:true, weetje:"Kuikens praten al met hun moeder vóór ze uit het ei komen.", cfg:{plan:"bird",body:"#f1cf4a",belly:"#ffe79a",beakCol:"#ef9f2e",legCol:"#ef9f2e",accent:"#c79a1e"}},
+  egel:{naam:"Egel", rarity:"gewoon", prijs:210, viaEi:true, weetje:"Een egel heeft zo'n 7.000 stekels.", cfg:{body:"#9a8268",belly:"#d8c8b2",ear:"#83705a",ears:"tiny",tail:"none",extras:["quills"],accent:"#5a4632"}},
+  eekhoorn:{naam:"Eekhoorn", rarity:"gewoon", prijs:205, viaEi:true, weetje:"Een eekhoorn vergeet waar 'ie z'n nootjes verstopt — en plant zo hele bossen.", cfg:{body:"#b06a38",belly:"#ecdcc6",ear:"#965426",ears:"up",tail:"bush",tailTip:"#ecdcc6",accent:"#6a3c1e"}},
+  hamster:{naam:"Hamster", rarity:"gewoon", prijs:175, viaEi:true, weetje:"Een hamster propt z'n wangen tot wel 3× z'n kopgrootte vol.", cfg:{body:"#caa56a",belly:"#f0e2c4",ear:"#b88f4e",ears:"round",tail:"stub",accent:"#7a5a2e"}},
+  zebraveulen:{naam:"Zebraveulen", rarity:"gewoon", prijs:215, prefZone:"savanne", viaEi:true, weetje:"Een pasgeboren zebraveulen staat al na een uur op z'n pootjes.", cfg:{body:"#efe6d6",belly:"#fbf5ea",ear:"#d8cbb4",ears:"up",tail:"stub",extras:["stripesBody"],accent:"#8a7a5e"}},
   // ---- ZELDZAAM ----
-  vos:{naam:"Vos", rarity:"zeldzaam", prijs:680, viaEi:true, weetje:"Vossen gebruiken het aardmagnetisch veld om te jagen.", cfg:{body:"#cf7437",belly:"#f0e8dc",ear:"#b85f26",ears:"up",tail:"bush",tailTip:"#f0e8dc",accent:"#5a3018"}},
-  pinguin:{naam:"Pinguïn", rarity:"zeldzaam", prijs:720, viaEi:true, weetje:"Pinguïns 'vrijen' met een mooi kiezelsteentje als cadeau.", cfg:{plan:"penguin",body:"#2d3340",belly:"#f2f2ec",beakCol:"#ef9f2e",accent:"#1c2029"}},
-  koala:{naam:"Koala", rarity:"zeldzaam", prijs:760, viaEi:true, weetje:"Koala's slapen tot 20 uur per dag — herstelkampioenen!", cfg:{body:"#98a0a6",belly:"#cdd2d6",ear:"#98a0a6",ears:"koala",tail:"none",nose:"#2e3238",accent:"#5e666c"}},
-  wasbeer:{naam:"Wasbeer", rarity:"zeldzaam", prijs:700, viaEi:true, weetje:"Wasberen wassen hun eten voor ze het opeten.", cfg:{body:"#8a8d96",belly:"#cbcdd4",ear:"#7a7d86",ears:"round",tail:"long",extras:["mask","stripesBody"],accent:"#2c2e34"}},
-  flamingo:{naam:"Flamingo", rarity:"zeldzaam", prijs:820, viaEi:true, weetje:"Flamingo's worden roze van hun garnalen-dieet.", cfg:{plan:"bird",body:"#e482a0",belly:"#f2c4d4",beakCol:"#2a1620",legCol:"#e07f9e",extras:["longneck"],accent:"#b85c78"}},
-  tijger:{naam:"Tijger", rarity:"zeldzaam", prijs:880, viaEi:true, weetje:"Elke tijger heeft een uniek streeppatroon — net als een vingerafdruk.", cfg:{body:"#e8902f",belly:"#f5e3c4",ear:"#c8761f",ears:"cat",tail:"long",extras:["stripesBody","whiskers"],accent:"#2a1a0e"}},
-  beer:{naam:"Beer", rarity:"zeldzaam", prijs:760, viaEi:true, weetje:"Beren onthouden honderden plekken waar lekker eten groeit.", cfg:{body:"#8a6240",belly:"#c2a074",ear:"#6f4c30",ears:"round",tail:"stub",nose:"#2e2018",accent:"#4a3220"}},
-  wolf:{naam:"Wolf", rarity:"zeldzaam", prijs:800, viaEi:true, weetje:"Een wolvenroedel werkt samen als een hecht team — net als jij en Stekkie.", cfg:{body:"#8a909a",belly:"#cfd4da",ear:"#767c86",ears:"up",tail:"bush",tailTip:"#cfd4da",accent:"#3a3e46"}},
-  hert:{naam:"Hert", rarity:"zeldzaam", prijs:720, viaEi:true, weetje:"Een hert kan binnen een dag na de geboorte al rennen.", cfg:{body:"#c08a52",belly:"#e8d4b4",ear:"#a8743e",ears:"up",tail:"stub",extras:["antlers","spots"],hornCol:"#7a5638",accent:"#9a6e3a"}},
-  nijlpaard:{naam:"Nijlpaard", rarity:"zeldzaam", prijs:840, viaEi:true, weetje:"Nijlpaarden maken hun eigen rode 'zonnebrand' aan tegen de zon.", cfg:{body:"#9a8fa0",belly:"#c4bcc8",ear:"#84798a",ears:"tiny",tail:"stub",nose:"#4a4250",extras:["snoutpatch"],accent:"#5e5566"}},
-  zebra:{naam:"Zebra", rarity:"zeldzaam", prijs:780, viaEi:true, weetje:"Zebrastrepen verwarren bijtende vliegen — een gestreepte life-hack.", cfg:{body:"#eceef0",belly:"#ffffff",ear:"#cfd2d6",ears:"up",tail:"long",extras:["stripesBody"],accent:"#23252b"}},
+  vos:{naam:"Vos", rarity:"zeldzaam", prijs:680, prefZone:"bos", viaEi:true, weetje:"Vossen gebruiken het aardmagnetisch veld om te jagen.", cfg:{body:"#cf7437",belly:"#f0e8dc",ear:"#b85f26",ears:"up",tail:"bush",tailTip:"#f0e8dc",accent:"#5a3018"}},
+  pinguin:{naam:"Pinguïn", rarity:"zeldzaam", prijs:720, prefZone:"poolgebied", viaEi:true, weetje:"Pinguïns 'vrijen' met een mooi kiezelsteentje als cadeau.", cfg:{plan:"penguin",body:"#2d3340",belly:"#f2f2ec",beakCol:"#ef9f2e",accent:"#1c2029"}},
+  koala:{naam:"Koala", rarity:"zeldzaam", prijs:760, prefZone:"jungle", viaEi:true, weetje:"Koala's slapen tot 20 uur per dag — herstelkampioenen!", cfg:{body:"#98a0a6",belly:"#cdd2d6",ear:"#98a0a6",ears:"koala",tail:"none",nose:"#2e3238",accent:"#5e666c"}},
+  wasbeer:{naam:"Wasbeer", rarity:"zeldzaam", prijs:700, prefZone:"bos", viaEi:true, weetje:"Wasberen wassen hun eten voor ze het opeten.", cfg:{body:"#8a8d96",belly:"#cbcdd4",ear:"#7a7d86",ears:"round",tail:"long",extras:["mask","stripesBody"],accent:"#2c2e34"}},
+  flamingo:{naam:"Flamingo", rarity:"zeldzaam", prijs:820, prefZone:"moeras", viaEi:true, weetje:"Flamingo's worden roze van hun garnalen-dieet.", cfg:{plan:"bird",body:"#e482a0",belly:"#f2c4d4",beakCol:"#2a1620",legCol:"#e07f9e",extras:["longneck"],accent:"#b85c78"}},
+  tijger:{naam:"Tijger", rarity:"zeldzaam", prijs:880, prefZone:"jungle", viaEi:true, weetje:"Elke tijger heeft een uniek streeppatroon — net als een vingerafdruk.", cfg:{body:"#e8902f",belly:"#f5e3c4",ear:"#c8761f",ears:"cat",tail:"long",extras:["stripesBody","whiskers"],accent:"#2a1a0e"}},
+  beer:{naam:"Beer", rarity:"zeldzaam", prijs:760, prefZone:"bos", viaEi:true, weetje:"Beren onthouden honderden plekken waar lekker eten groeit.", cfg:{body:"#8a6240",belly:"#c2a074",ear:"#6f4c30",ears:"round",tail:"stub",nose:"#2e2018",accent:"#4a3220"}},
+  wolf:{naam:"Wolf", rarity:"zeldzaam", prijs:800, prefZone:"bos", viaEi:true, weetje:"Een wolvenroedel werkt samen als een hecht team — net als jij en Stekkie.", cfg:{body:"#8a909a",belly:"#cfd4da",ear:"#767c86",ears:"up",tail:"bush",tailTip:"#cfd4da",accent:"#3a3e46"}},
+  hert:{naam:"Hert", rarity:"zeldzaam", prijs:720, prefZone:"bos", viaEi:true, weetje:"Een hert kan binnen een dag na de geboorte al rennen.", cfg:{body:"#c08a52",belly:"#e8d4b4",ear:"#a8743e",ears:"up",tail:"stub",extras:["antlers","spots"],hornCol:"#7a5638",accent:"#9a6e3a"}},
+  nijlpaard:{naam:"Nijlpaard", rarity:"zeldzaam", prijs:840, prefZone:"moeras", viaEi:true, weetje:"Nijlpaarden maken hun eigen rode 'zonnebrand' aan tegen de zon.", cfg:{body:"#9a8fa0",belly:"#c4bcc8",ear:"#84798a",ears:"tiny",tail:"stub",nose:"#4a4250",extras:["snoutpatch"],accent:"#5e5566"}},
+  zebra:{naam:"Zebra", rarity:"zeldzaam", prijs:780, prefZone:"savanne", viaEi:true, weetje:"Zebrastrepen verwarren bijtende vliegen — een gestreepte life-hack.", cfg:{body:"#eceef0",belly:"#ffffff",ear:"#cfd2d6",ears:"up",tail:"long",extras:["stripesBody"],accent:"#23252b"}},
   olifant:{naam:"Olifant", rarity:"zeldzaam", prijs:920, viaEi:true, prefZone:"savanne", weetje:"Olifanten troosten verdrietige kuddegenoten — echte gevoelsmensen. 🐘", cfg:{body:"#9aa1a8",belly:"#bdc3c9",ear:"#868d95",ears:"elephant",tail:"long",extras:["trunk","tusks"],accent:"#5e646c"}},
   uil:{naam:"Uil", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"bos", weetje:"Een uil draait z'n kop bijna helemaal rond — tot 270 graden.", cfg:{plan:"bird",body:"#9a7d5a",belly:"#e2d2b6",beakCol:"#e8a23a",extras:["owleyes","eartufts"],crestCol:"#7a5e3a",accent:"#5a4632"}},
   ezelspinguin:{naam:"Ezelspinguïn", rarity:"zeldzaam", prijs:740, viaEi:true, prefZone:"poolgebied", weetje:"De ezelspinguïn is de snelste zwemmer onder de pinguïns.", cfg:{plan:"penguin",body:"#2b3138",belly:"#f4f4f0",beakCol:"#ef7a3a",accent:"#1a1f24"}},
   kameel:{naam:"Kameel", rarity:"zeldzaam", prijs:860, viaEi:true, prefZone:"savanne", weetje:"In z'n bult slaat een kameel vet op — geen water, slim bedacht.", cfg:{body:"#c9a96e",belly:"#e6d6b4",ear:"#b3925a",ears:"up",tail:"long",extras:["hump"],accent:"#8a6a3a"}},
   papegaai:{naam:"Papegaai", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"jungle", weetje:"Papegaaien leren woordjes en dansen graag op muziek. 🦜", cfg:{plan:"bird",body:"#2faa55",belly:"#ffd23a",beakCol:"#3a3038",tail:"bird",extras:["crest","wing"],crestCol:"#e8413a",wingCol:"#1f7ea0",accent:"#1f7a3a"}},
   // ---- LEGENDARISCH ----
-  eenhoorn:{naam:"Eenhoorn", rarity:"legendarisch", prijs:3200, viaEi:true, weetje:"De eenhoorn is het symbool van pure, onstuitbare girlpower. ✨", cfg:{body:"#ece3f2",belly:"#fbf6ff",ear:"#ddd0ea",ears:"up",tail:"long",extras:["horn","forelock","liontuft"],hornCol:"#ffd16a",maneCol:"#d8a9e6",accent:"#c2afd2"}},
-  draak:{naam:"Draak", rarity:"legendarisch", prijs:3600, viaEi:true, weetje:"Draken bewaken schatten — die van jou is je booty-gainz. 🐉", cfg:{body:"#3f8f74",belly:"#cfeee0",ear:"#2f7a60",ears:"up",tail:"long",extras:["spike","wing"],spikeCol:"#246a52",wingCol:"#2f7a60",accent:"#1f5a44"}},
-  feniks:{naam:"Feniks", rarity:"legendarisch", prijs:3800, viaEi:true, weetje:"De feniks herrijst sterker — net als jij na elke deload.", cfg:{plan:"bird",body:"#d2691e",belly:"#f0c060",beakCol:"#ef9f2e",extras:["wing","crest","phoenixtail"],wingCol:"#b5471a",crestCol:"#ffd16a",accent:"#8a3712"}},
-  giraf:{naam:"Giraf", rarity:"legendarisch", prijs:3400, viaEi:true, weetje:"Een giraf heeft net zoveel nekwervels als jij — alleen veel langer. 🦒", cfg:{body:"#e3bb5e",belly:"#f2dfac",ear:"#c89a40",ears:"up",tail:"long",extras:["longneck","spots"],hornCol:"#9a6e28",accent:"#a87a2e"}},
-  keizerspinguin:{naam:"Keizerspinguïn", rarity:"legendarisch", prijs:3000, viaEi:true, prefZone:"poolgebied", weetje:"Keizerspinguïns broeden hun ei uit op hun voeten bij -40°C. Echte doorzetters.", cfg:{plan:"penguin",body:"#2d3340",belly:"#f6f3e6",beakCol:"#ffae3a",accent:"#e9c45a"}},
-  goudvis:{naam:"Goudvis", rarity:"gewoon", prijs:260, viaEi:false, prefZone:"aquarium", weetje:"Een goudvis herkent gezichten en onthoudt dingen maandenlang.", cfg:{plan:"fish",body:"#ff9b2f",belly:"#ffd28a",finCol:"#ff7e1a",accent:"#c25e10"}},
+  eenhoorn:{naam:"Eenhoorn", rarity:"legendarisch", prijs:3050, prefZone:"bos", viaEi:true, weetje:"De eenhoorn is het symbool van pure, onstuitbare girlpower. ✨", cfg:{body:"#ece3f2",belly:"#fbf6ff",ear:"#ddd0ea",ears:"up",tail:"long",extras:["horn","forelock","liontuft"],hornCol:"#ffd16a",maneCol:"#d8a9e6",accent:"#c2afd2"}},
+  draak:{naam:"Draak", rarity:"legendarisch", prijs:3450, prefZone:"moeras", viaEi:true, weetje:"Draken bewaken schatten — die van jou is je booty-gainz. 🐉", cfg:{body:"#3f8f74",belly:"#cfeee0",ear:"#2f7a60",ears:"up",tail:"long",extras:["spike","wing"],spikeCol:"#246a52",wingCol:"#2f7a60",accent:"#1f5a44"}},
+  feniks:{naam:"Feniks", rarity:"legendarisch", prijs:3650, prefZone:"jungle", viaEi:true, weetje:"De feniks herrijst sterker — net als jij na elke deload.", cfg:{plan:"bird",body:"#d2691e",belly:"#f0c060",beakCol:"#ef9f2e",extras:["wing","crest","phoenixtail"],wingCol:"#b5471a",crestCol:"#ffd16a",accent:"#8a3712"}},
+  giraf:{naam:"Giraf", rarity:"legendarisch", prijs:3250, prefZone:"savanne", viaEi:true, weetje:"Een giraf heeft net zoveel nekwervels als jij — alleen veel langer. 🦒", cfg:{body:"#e3bb5e",belly:"#f2dfac",ear:"#c89a40",ears:"up",tail:"long",extras:["longneck","spots"],hornCol:"#9a6e28",accent:"#a87a2e"}},
+  keizerspinguin:{naam:"Keizerspinguïn", rarity:"legendarisch", prijs:2850, viaEi:true, prefZone:"poolgebied", weetje:"Keizerspinguïns broeden hun ei uit op hun voeten bij -40°C. Echte doorzetters.", cfg:{plan:"penguin",body:"#2d3340",belly:"#f6f3e6",beakCol:"#ffae3a",accent:"#e9c45a"}},
+  goudvis:{naam:"Goudvis", rarity:"gewoon", prijs:300, viaEi:false, prefZone:"aquarium", weetje:"Een goudvis herkent gezichten en onthoudt dingen maandenlang.", cfg:{plan:"fish",body:"#ff9b2f",belly:"#ffd28a",finCol:"#ff7e1a",accent:"#c25e10"}},
   clownvis:{naam:"Clownvis", rarity:"zeldzaam", prijs:520, viaEi:false, prefZone:"aquarium", weetje:"Clownvissen wonen veilig tussen de tentakels van een anemoon.", cfg:{plan:"fish",body:"#f5731f",belly:"#ffe2c4",finCol:"#e85d10",extras:["stripes"],accent:"#fff5ec"}},
   blauwevis:{naam:"Blauwe Tang", rarity:"zeldzaam", prijs:560, viaEi:false, prefZone:"aquarium", weetje:"De blauwe tang (à la Dory) vergeet snel — maar blijft altijd vrolijk.", cfg:{plan:"fish",body:"#2f7fd0",belly:"#bfe0f5",finCol:"#ffd23a",accent:"#173f6e"}},
-  neonvis:{naam:"Neonvis", rarity:"gewoon", prijs:240, viaEi:false, prefZone:"aquarium", weetje:"Neonvissen lichten op als kleine onderwater-lampjes.", cfg:{plan:"fish",body:"#2f9fd0",belly:"#cfeaf6",finCol:"#7fd0ee",extras:["stripes"],accent:"#e8413a"}},
+  neonvis:{naam:"Neonvis", rarity:"gewoon", prijs:280, viaEi:false, prefZone:"aquarium", weetje:"Neonvissen lichten op als kleine onderwater-lampjes.", cfg:{plan:"fish",body:"#2f9fd0",belly:"#cfeaf6",finCol:"#7fd0ee",extras:["stripes"],accent:"#e8413a"}},
   kogelvis:{naam:"Kogelvis", rarity:"zeldzaam", prijs:540, viaEi:false, prefZone:"aquarium", weetje:"Een kogelvis blaast zichzelf op tot een stekelige bal als 'ie schrikt.", cfg:{plan:"fish",body:"#e8c64a",belly:"#f6e6a8",finCol:"#d9a93a",extras:["spots"],accent:"#8a6a1e"}},
   vlinder:{naam:"Vlinder", rarity:"zeldzaam", prijs:480, viaEi:false, weetje:"Vlinders proeven met hun pootjes — eerst voelen, dan smullen. 🦋", cfg:{plan:"butterfly",body:"#e07faa",wingCol:"#f5bcd6",accent:"#c084fc"}},
-  monarchvlinder:{naam:"Monarchvlinder", rarity:"legendarisch", prijs:1400, viaEi:true, weetje:"De monarchvlinder vliegt duizenden kilometers — een langeafstands-kampioen.", cfg:{plan:"butterfly",body:"#e8902f",wingCol:"#ff9b2f",accent:"#2a1a0e"}},
+  monarchvlinder:{naam:"Monarchvlinder", rarity:"legendarisch", prijs:1250, prefZone:"moeras", viaEi:true, weetje:"De monarchvlinder vliegt duizenden kilometers — een langeafstands-kampioen.", cfg:{plan:"butterfly",body:"#e8902f",wingCol:"#ff9b2f",accent:"#2a1a0e"}},
   zeepaardje:{naam:"Zeepaardje", rarity:"zeldzaam", prijs:580, viaEi:false, prefZone:"aquarium", weetje:"Bij zeepaardjes draagt de man de baby's — een echte papa-held. 🐴", cfg:{plan:"fish",shape:"seahorse",body:"#f0a93a",belly:"#ffd98a",finCol:"#e88f1a",accent:"#b56a10"}},
-  krab:{naam:"Krab", rarity:"gewoon", prijs:280, viaEi:false, prefZone:"aquarium", weetje:"Krabben lopen zijwaarts en zwaaien met hun scharen om indruk te maken.", cfg:{plan:"crab",body:"#e3543a",belly:"#f3b8a4",accent:"#a8331f"}},
-  haai:{naam:"Haai", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"aquarium", weetje:"Haaien bestaan al langer dan bomen — echte oer-overlevers. 🦈", cfg:{plan:"fish",shape:"shark",body:"#8a97a3",belly:"#e2e8ec",finCol:"#6e7a86",accent:"#3a434c"}},
+  krab:{naam:"Krab", rarity:"gewoon", prijs:320, viaEi:false, prefZone:"aquarium", weetje:"Krabben lopen zijwaarts en zwaaien met hun scharen om indruk te maken.", cfg:{plan:"crab",body:"#e3543a",belly:"#f3b8a4",accent:"#a8331f"}},
+  haai:{naam:"Haai", rarity:"legendarisch", prijs:1450, viaEi:true, prefZone:"aquarium", weetje:"Haaien bestaan al langer dan bomen — echte oer-overlevers. 🦈", cfg:{plan:"fish",shape:"shark",body:"#8a97a3",belly:"#e2e8ec",finCol:"#6e7a86",accent:"#3a434c"}},
   // ---- SPECIALS (Bo's favorieten) ----
   stekkie:{naam:"Stekkie", rarity:"special", prijs:0, gratis:true, viaEi:false, perk:{pct:0.05,label:"+5% Pootjes op alles"}, weetje:"Stekkie de teckel is je trouwe mascotte: korte pootjes, groot hart! ❤️", cfg:{body:"#b07a3e",belly:"#e8d3ad",ear:"#8a5a28",ears:"flop",tail:"long",extras:["longbody"],accent:"#6a4520"}},
-  panda:{naam:"Panda", rarity:"special", prijs:2600, viaEi:false, perk:{pct:0.15,label:"+15% Pootjes in een rust- of deload-week"}, weetje:"Panda beloont herstel — rust is waar je sterker van wordt.", cfg:{body:"#f0f0f0",belly:"#ffffff",ear:"#1f1f1f",ears:"round",tail:"stub",extras:["panda"],accent:"#1f1f1f"}},
-  leeuw:{naam:"Leeuw", rarity:"special", prijs:2900, viaEi:false, perk:{pct:0.15,label:"+15% Pootjes bij een zware gym-PR"}, weetje:"De leeuw brult bij elke kracht-PR. Hoor je 'm? 🦁", cfg:{body:"#cda35e",belly:"#ecd3a4",ear:"#b8884a",ears:"round",tail:"long",extras:["mane","liontuft"],maneCol:"#9a6a30",accent:"#8a5a28"}},
-  panter:{naam:"Panter", rarity:"special", prijs:2800, viaEi:false, perk:{pct:0.12,label:"+12% Pootjes op HIIT en snelle runs"}, weetje:"Snel, explosief, elegant — de panter houdt van tempo.", cfg:{body:"#2c2a34",belly:"#3a3744",ear:"#23212a",ears:"cat",tail:"long",eyeColor:"#9ff05a",extras:["whiskers"],accent:"#15131b"}},
-  otter:{naam:"Otter", rarity:"special", prijs:2700, viaEi:false, perk:{pct:0.10,label:"+10% Pootjes op hardloopdagen"}, weetje:"Otters houden pootjes vast tijdens het slapen zodat ze niet wegdrijven. 🦦", cfg:{body:"#6f5640",belly:"#c8b49a",ear:"#5c4634",ears:"tiny",tail:"flat",extras:["whiskers","snoutpatch"],accent:"#4a382a"}},
+  panda:{naam:"Panda", rarity:"special", prijs:2600, prefZone:"bos", viaEi:false, perk:{pct:0.15,label:"+15% Pootjes in een rust- of deload-week"}, weetje:"Panda beloont herstel — rust is waar je sterker van wordt.", cfg:{body:"#f0f0f0",belly:"#ffffff",ear:"#1f1f1f",ears:"round",tail:"stub",extras:["panda"],accent:"#1f1f1f"}},
+  leeuw:{naam:"Leeuw", rarity:"special", prijs:2900, prefZone:"savanne", viaEi:false, perk:{pct:0.15,label:"+15% Pootjes bij een zware gym-PR"}, weetje:"De leeuw brult bij elke kracht-PR. Hoor je 'm? 🦁", cfg:{body:"#cda35e",belly:"#ecd3a4",ear:"#b8884a",ears:"round",tail:"long",extras:["mane","liontuft"],maneCol:"#9a6a30",accent:"#8a5a28"}},
+  panter:{naam:"Panter", rarity:"special", prijs:2800, prefZone:"jungle", viaEi:false, perk:{pct:0.12,label:"+12% Pootjes op HIIT en snelle runs"}, weetje:"Snel, explosief, elegant — de panter houdt van tempo.", cfg:{body:"#2c2a34",belly:"#3a3744",ear:"#23212a",ears:"cat",tail:"long",eyeColor:"#9ff05a",extras:["whiskers"],accent:"#15131b"}},
+  otter:{naam:"Otter", rarity:"special", prijs:2700, prefZone:"moeras", viaEi:false, perk:{pct:0.10,label:"+10% Pootjes op hardloopdagen"}, weetje:"Otters houden pootjes vast tijdens het slapen zodat ze niet wegdrijven. 🦦", cfg:{body:"#6f5640",belly:"#c8b49a",ear:"#5c4634",ears:"tiny",tail:"flat",extras:["whiskers","snoutpatch"],accent:"#4a382a"}},
   // ---- EVENT ----
-  rendier:{naam:"Rendier", rarity:"event", prijs:900, event:"dec", viaEi:false, weetje:"Een feestelijk rendier voor de donkere dagen. 🎄", cfg:{body:"#8a6446",belly:"#d2bfa2",ear:"#6f4f36",ears:"up",tail:"stub",extras:["antlers"],hornCol:"#7a5638",accent:"#5a3e28"}},
+  rendier:{naam:"Rendier", rarity:"event", prijs:900, prefZone:"poolgebied", event:"dec", viaEi:false, weetje:"Een feestelijk rendier voor de donkere dagen. 🎄", cfg:{body:"#8a6446",belly:"#d2bfa2",ear:"#6f4f36",ears:"up",tail:"stub",extras:["antlers"],hornCol:"#7a5638",accent:"#5a3e28"}},
   zomervlinder:{naam:"Zomervlinder", rarity:"event", prijs:700, event:"jun", viaEi:false, weetje:"Fladdert binnen in de zomer. ☀️", cfg:{plan:"bird",body:"#e07faa",belly:"#f2c8da",beakCol:"#2a1620",extras:["wing"],wingCol:"#c084fc",accent:"#b85c84"}},
 
   // ==== NIEUWE DIEREN — golf 1 (bestaande generator) ====
   // -- gewoon --
-  bever:{naam:"Bever", rarity:"gewoon", prijs:175, viaEi:true, prefZone:"moeras", weetje:"Een bever bouwt dammen zonder bouwtekening en z'n tanden groeien z'n leven lang door.", cfg:{body:"#7a5636",belly:"#c2a878",ear:"#624427",ears:"round",tail:"flat",extras:["snoutpatch"],nose:"#3a2c1e",accent:"#4a3220"}},
-  aapje:{naam:"Aapje", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"jungle", weetje:"Apen slingeren van tak naar tak en stelen graag een banaan.", cfg:{body:"#8a6a4a",belly:"#e8cba0",ear:"#6f5238",ears:"round",tail:"long",extras:["snoutpatch"],accent:"#4a3422"}},
-  gibbon:{naam:"Gibbon", rarity:"gewoon", prijs:165, viaEi:true, prefZone:"jungle", weetje:"De gibbon zingt 's ochtends de hele jungle wakker.", cfg:{body:"#6a5c52",belly:"#cdbfb0",ear:"#564a42",ears:"round",tail:"stub",extras:["longbody","snoutpatch"],accent:"#3a322c"}},
-  kaketoe:{naam:"Kaketoe", rarity:"gewoon", prijs:175, viaEi:true, prefZone:"jungle", weetje:"De kaketoe zet bij opwinding z'n grote kuif overeind en roept woordjes na.", cfg:{plan:"bird",body:"#f4f1ea",belly:"#fffdf8",beakCol:"#3a3038",extras:["crest"],crestCol:"#ffd23a",accent:"#cfc8bc"}},
-  ree:{naam:"Ree", rarity:"gewoon", prijs:170, viaEi:true, prefZone:"bos", weetje:"Een reekalfje ligt doodstil verstopt in het hoge gras tot mama terugkomt.", cfg:{body:"#c08a52",belly:"#ecd9bc",ear:"#a8743e",ears:"up",tail:"stub",extras:["spots"],accent:"#8a6238"}},
-  stinkdier:{naam:"Stinkdier", rarity:"gewoon", prijs:160, viaEi:true, prefZone:"bos", weetje:"Een stinkdier doet eerst een handstand als waarschuwing vóór 't z'n geurkanon afvuurt.", cfg:{body:"#2c2a30",belly:"#3a3742",ear:"#23212a",ears:"round",tail:"bush",tailTip:"#f4f4f4",extras:["stripesBody"],accent:"#f4f4f4"}},
-  sneeuwvos:{naam:"Sneeuwvos", rarity:"gewoon", prijs:180, viaEi:true, prefZone:"poolgebied", weetje:"De poolvos heeft 's winters een sneeuwwitte vacht en een staart als sjaal.", cfg:{body:"#eef1f4",belly:"#ffffff",ear:"#d6dde2",ears:"up",tail:"bush",tailTip:"#ffffff",accent:"#9fb0bc"}},
-  guppy:{naam:"Guppy", rarity:"gewoon", prijs:240, viaEi:false, prefZone:"aquarium", weetje:"De kleine guppy krijgt aan de lopende band vrolijke babyguppies.", cfg:{plan:"fish",body:"#ff7eb0",belly:"#ffd0e2",finCol:"#7fd0ee",extras:["spots"],accent:"#c2569a"}},
+  bever:{naam:"Bever", rarity:"gewoon", prijs:215, viaEi:true, prefZone:"moeras", weetje:"Een bever bouwt dammen zonder bouwtekening en z'n tanden groeien z'n leven lang door.", cfg:{body:"#7a5636",belly:"#c2a878",ear:"#624427",ears:"round",tail:"flat",extras:["snoutpatch"],nose:"#3a2c1e",accent:"#4a3220"}},
+  aapje:{naam:"Aapje", rarity:"gewoon", prijs:210, viaEi:true, prefZone:"jungle", weetje:"Apen slingeren van tak naar tak en stelen graag een banaan.", cfg:{body:"#8a6a4a",belly:"#e8cba0",ear:"#6f5238",ears:"round",tail:"long",extras:["snoutpatch"],accent:"#4a3422"}},
+  gibbon:{naam:"Gibbon", rarity:"gewoon", prijs:205, viaEi:true, prefZone:"jungle", weetje:"De gibbon zingt 's ochtends de hele jungle wakker.", cfg:{body:"#6a5c52",belly:"#cdbfb0",ear:"#564a42",ears:"round",tail:"stub",extras:["longbody","snoutpatch"],accent:"#3a322c"}},
+  kaketoe:{naam:"Kaketoe", rarity:"gewoon", prijs:215, viaEi:true, prefZone:"jungle", weetje:"De kaketoe zet bij opwinding z'n grote kuif overeind en roept woordjes na.", cfg:{plan:"bird",body:"#f4f1ea",belly:"#fffdf8",beakCol:"#3a3038",extras:["crest"],crestCol:"#ffd23a",accent:"#cfc8bc"}},
+  ree:{naam:"Ree", rarity:"gewoon", prijs:210, viaEi:true, prefZone:"bos", weetje:"Een reekalfje ligt doodstil verstopt in het hoge gras tot mama terugkomt.", cfg:{body:"#c08a52",belly:"#ecd9bc",ear:"#a8743e",ears:"up",tail:"stub",extras:["spots"],accent:"#8a6238"}},
+  stinkdier:{naam:"Stinkdier", rarity:"gewoon", prijs:200, viaEi:true, prefZone:"bos", weetje:"Een stinkdier doet eerst een handstand als waarschuwing vóór 't z'n geurkanon afvuurt.", cfg:{body:"#2c2a30",belly:"#3a3742",ear:"#23212a",ears:"round",tail:"bush",tailTip:"#f4f4f4",extras:["stripesBody"],accent:"#f4f4f4"}},
+  sneeuwvos:{naam:"Sneeuwvos", rarity:"gewoon", prijs:220, viaEi:true, prefZone:"poolgebied", weetje:"De poolvos heeft 's winters een sneeuwwitte vacht en een staart als sjaal.", cfg:{body:"#eef1f4",belly:"#ffffff",ear:"#d6dde2",ears:"up",tail:"bush",tailTip:"#ffffff",accent:"#9fb0bc"}},
+  guppy:{naam:"Guppy", rarity:"gewoon", prijs:280, viaEi:false, prefZone:"aquarium", weetje:"De kleine guppy krijgt aan de lopende band vrolijke babyguppies.", cfg:{plan:"fish",body:"#ff7eb0",belly:"#ffd0e2",finCol:"#7fd0ee",extras:["spots"],accent:"#c2569a"}},
   // -- zeldzaam --
   ijsvogel:{naam:"IJsvogel", rarity:"zeldzaam", prijs:640, viaEi:true, prefZone:"moeras", weetje:"De ijsvogel schiet als een blauw-oranje flits over de beek.", cfg:{plan:"bird",body:"#1fb6c8",belly:"#ef9f4a",beakCol:"#2a2028",legCol:"#e8413a",accent:"#15808e"}},
   ooievaar:{naam:"Ooievaar", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"moeras", weetje:"De ooievaar is een langebeen-vogel die geluk en een nieuw begin brengt.", cfg:{plan:"bird",body:"#f4f4f0",belly:"#ffffff",beakCol:"#e8413a",legCol:"#e8413a",extras:["longneck","wing"],wingCol:"#2c2a30",accent:"#cfd0cc"}},
@@ -2403,21 +2403,31 @@ const ANIMALS = {
   alpaca:{naam:"Alpaca", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"savanne", weetje:"De wollige alpaca heeft een eeuwige glimlach.", cfg:{body:"#e9ddc8",belly:"#f6efe2",ear:"#d2c2a6",ears:"up",tail:"stub",extras:["longneck"],accent:"#a8967a"}},
   axolotl:{naam:"Axolotl", rarity:"zeldzaam", prijs:560, viaEi:false, prefZone:"aquarium", weetje:"De axolotl glimlacht altijd en groeit afgebroken pootjes gewoon weer aan.", cfg:{plan:"fish",body:"#f4a7c4",belly:"#ffd8e6",finCol:"#ff7eb0",accent:"#d06a92"}},
   // -- legendarisch --
-  ara:{naam:"Ara", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"jungle", weetje:"De ara is de spectaculaire reuzenpapegaai van 't regenwoud in regenboogkleuren.", cfg:{plan:"bird",body:"#e8413a",belly:"#ffd23a",beakCol:"#3a3038",tail:"bird",extras:["crest","wing"],crestCol:"#2f7fd0",wingCol:"#2faa55",accent:"#b5281f"}},
-  eland:{naam:"Eland", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"bos", weetje:"De eland is 't grootste hertachtige ter wereld en zwemt moeiteloos door moerassen.", cfg:{body:"#5a4636",belly:"#7e6a56",ear:"#463628",ears:"up",tail:"stub",extras:["antlers","snoutpatch"],hornCol:"#8a6e4e",accent:"#2e2418"}},
-  ijsbeer:{naam:"IJsbeer", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"poolgebied", weetje:"De ijsbeer is de koning van 't poolgebied — enorm, sneeuwwit en zachtaardig met welpjes.", cfg:{body:"#f1efe8",belly:"#ffffff",ear:"#dcdad2",ears:"round",tail:"stub",nose:"#2e2a26",accent:"#c8c6be"}},
-  sneeuwpanter:{naam:"Sneeuwpanter", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"poolgebied", weetje:"De sneeuwpanter is een schimmige bergkat met een enorme warme staart om zich in te wikkelen.", cfg:{body:"#d2d8de",belly:"#eef1f4",ear:"#b4bcc4",ears:"cat",tail:"long",extras:["spots","whiskers"],accent:"#5a626c"}},
-  pegasus:{naam:"Pegasus", rarity:"legendarisch", prijs:3200, viaEi:true, weetje:"De pegasus is een gevleugeld wolkenpaard dat sterren achterlaat in de lucht.", cfg:{body:"#f2f4f8",belly:"#ffffff",ear:"#dde2ea",ears:"up",tail:"long",extras:["wing","forelock","liontuft"],wingCol:"#dbe6f2",maneCol:"#bcd0e6",accent:"#c2cede"}},
+  ara:{naam:"Ara", rarity:"legendarisch", prijs:1350, viaEi:true, prefZone:"jungle", weetje:"De ara is de spectaculaire reuzenpapegaai van 't regenwoud in regenboogkleuren.", cfg:{plan:"bird",body:"#e8413a",belly:"#ffd23a",beakCol:"#3a3038",tail:"bird",extras:["crest","wing"],crestCol:"#2f7fd0",wingCol:"#2faa55",accent:"#b5281f"}},
+  eland:{naam:"Eland", rarity:"legendarisch", prijs:1350, viaEi:true, prefZone:"bos", weetje:"De eland is 't grootste hertachtige ter wereld en zwemt moeiteloos door moerassen.", cfg:{body:"#5a4636",belly:"#7e6a56",ear:"#463628",ears:"up",tail:"stub",extras:["antlers","snoutpatch"],hornCol:"#8a6e4e",accent:"#2e2418"}},
+  ijsbeer:{naam:"IJsbeer", rarity:"legendarisch", prijs:1450, viaEi:true, prefZone:"poolgebied", weetje:"De ijsbeer is de koning van 't poolgebied — enorm, sneeuwwit en zachtaardig met welpjes.", cfg:{body:"#f1efe8",belly:"#ffffff",ear:"#dcdad2",ears:"round",tail:"stub",nose:"#2e2a26",accent:"#c8c6be"}},
+  sneeuwpanter:{naam:"Sneeuwpanter", rarity:"legendarisch", prijs:1450, viaEi:true, prefZone:"poolgebied", weetje:"De sneeuwpanter is een schimmige bergkat met een enorme warme staart om zich in te wikkelen.", cfg:{body:"#d2d8de",belly:"#eef1f4",ear:"#b4bcc4",ears:"cat",tail:"long",extras:["spots","whiskers"],accent:"#5a626c"}},
+  pegasus:{naam:"Pegasus", rarity:"legendarisch", prijs:3050, prefZone:"savanne", viaEi:true, weetje:"De pegasus is een gevleugeld wolkenpaard dat sterren achterlaat in de lucht.", cfg:{body:"#f2f4f8",belly:"#ffffff",ear:"#dde2ea",ears:"up",tail:"long",extras:["wing","forelock","liontuft"],wingCol:"#dbe6f2",maneCol:"#bcd0e6",accent:"#c2cede"}},
 
   // ==== NIEUWE DIEREN — golf 2 (nieuw teken-werk) ====
   toekan:{naam:"Toekan", rarity:"zeldzaam", prijs:800, viaEi:true, prefZone:"jungle", weetje:"De toekan draagt de grootste, kleurrijkste snavel van de jungle als een trotse vlag.", cfg:{plan:"bird",body:"#2c2a30",belly:"#f4f4f0",beakCol:"#ff9b2f",legCol:"#5a8ad0",extras:["toucanbeak"],crestCol:"#e8413a",accent:"#15131a"}},
   zeehond:{naam:"Zeehond", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"poolgebied", weetje:"De zeehond is een knuffelig rond robbenjong met grote zwarte kraalogen.", cfg:{plan:"seal",body:"#9aa2ac",belly:"#d2d8de",nose:"#2a2e34",accent:"#5e646c"}},
   zeeschildpad:{naam:"Zeeschildpad", rarity:"zeldzaam", prijs:820, viaEi:true, prefZone:"aquarium", weetje:"De zeeschildpad vaart kalm door 't water en wordt soms wel honderd jaar oud.", cfg:{plan:"turtle",body:"#5a8a52",belly:"#e6d6a8",legCol:"#7a9a5a",accent:"#3a5e34"}},
-  pauw:{naam:"Pauw", rarity:"legendarisch", prijs:1500, viaEi:true, prefZone:"jungle", weetje:"De pauw pronkt met een waaier van honderden glinsterende oog-veren.", cfg:{plan:"bird",body:"#1f8a8a",belly:"#2fb0b0",beakCol:"#3a3038",extras:["peacocktail","crest"],crestCol:"#2f7fd0",wingCol:"#155a6a",accent:"#134a4a"}},
-  kitsune:{naam:"Kitsune", rarity:"legendarisch", prijs:3200, viaEi:true, prefZone:"bos", weetje:"De kitsune is een mythische geestenvos met negen vlammende staarten.", cfg:{body:"#f0ece4",belly:"#fffdf8",ear:"#e0d6c8",ears:"up",tail:"none",extras:["ninetails","mask"],tailTip:"#ef6a8a",maneCol:"#f0ece4",accent:"#d2546a"}},
-  dolfijn:{naam:"Dolfijn", rarity:"legendarisch", prijs:1600, viaEi:true, prefZone:"aquarium", weetje:"De dolfijn springt in bogen uit 't water en is een van de slimste dieren ter wereld.", cfg:{plan:"fish",shape:"dolphin",body:"#7fa8c4",belly:"#eaf2f7",finCol:"#5f88a4",accent:"#3a5e74"}},
-  walvis:{naam:"Walvis", rarity:"legendarisch", prijs:1700, viaEi:true, prefZone:"aquarium", weetje:"De bultrugwalvis is 't grootste dier dat ooit leefde en zingt liederen die kilometers ver dragen.", cfg:{plan:"fish",shape:"whale",body:"#5a7a9a",belly:"#cdd9e2",finCol:"#44607c",accent:"#2e4a64"}},
-  orka:{naam:"Orka", rarity:"legendarisch", prijs:1700, viaEi:true, prefZone:"aquarium", weetje:"De orka is een imposante zwart-witte zwemmer — eigenlijk de grootste dolfijn ter wereld.", cfg:{plan:"fish",shape:"orca",body:"#22272e",belly:"#f4f4f0",finCol:"#15191e",accent:"#0e1216"}}
+  pauw:{naam:"Pauw", rarity:"legendarisch", prijs:1350, viaEi:true, prefZone:"jungle", weetje:"De pauw pronkt met een waaier van honderden glinsterende oog-veren.", cfg:{plan:"bird",body:"#1f8a8a",belly:"#2fb0b0",beakCol:"#3a3038",extras:["peacocktail","crest"],crestCol:"#2f7fd0",wingCol:"#155a6a",accent:"#134a4a"}},
+  kitsune:{naam:"Kitsune", rarity:"legendarisch", prijs:3050, viaEi:true, prefZone:"bos", weetje:"De kitsune is een mythische geestenvos met negen vlammende staarten.", cfg:{body:"#f0ece4",belly:"#fffdf8",ear:"#e0d6c8",ears:"up",tail:"none",extras:["ninetails","mask"],tailTip:"#ef6a8a",maneCol:"#f0ece4",accent:"#d2546a"}},
+  dolfijn:{naam:"Dolfijn", rarity:"legendarisch", prijs:1450, viaEi:true, prefZone:"aquarium", weetje:"De dolfijn springt in bogen uit 't water en is een van de slimste dieren ter wereld.", cfg:{plan:"fish",shape:"dolphin",body:"#7fa8c4",belly:"#eaf2f7",finCol:"#5f88a4",accent:"#3a5e74"}},
+  walvis:{naam:"Walvis", rarity:"legendarisch", prijs:1550, viaEi:true, prefZone:"aquarium", weetje:"De bultrugwalvis is 't grootste dier dat ooit leefde en zingt liederen die kilometers ver dragen.", cfg:{plan:"fish",shape:"whale",body:"#5a7a9a",belly:"#cdd9e2",finCol:"#44607c",accent:"#2e4a64"}},
+  orka:{naam:"Orka", rarity:"legendarisch", prijs:1550, viaEi:true, prefZone:"aquarium", weetje:"De orka is een imposante zwart-witte zwemmer — eigenlijk de grootste dolfijn ter wereld.", cfg:{plan:"fish",shape:"orca",body:"#22272e",belly:"#f4f4f0",finCol:"#15191e",accent:"#0e1216"}},
+  gazelle:{naam:"Gazelle", rarity:"gewoon", prijs:230, viaEi:true, prefZone:"savanne", weetje:"Een gazelle springt soms recht de lucht in van blijdschap — dat heet 'pronken'.", cfg:{body:"#caa76a",belly:"#efe0c4",ear:"#b8955a",ears:"up",tail:"stub",tailTip:"#efe0c4",extras:["antlers"],hornCol:"#4a3a24",accent:"#7a5c34"}},
+  struisvogel:{naam:"Struisvogel", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"savanne", weetje:"De struisvogel is de snelste tweevoeter ter wereld — tot 70 km/u — en legt eieren zo groot als 24 kippeneieren.", cfg:{plan:"bird",body:"#463d35",belly:"#e8e0d0",beakCol:"#d98a3a",legCol:"#d8c0a0",extras:["longneck","wing"],wingCol:"#332c26",accent:"#2a241f"}},
+  neushoorn:{naam:"Neushoorn", rarity:"zeldzaam", prijs:880, viaEi:true, prefZone:"savanne", weetje:"De hoorn van een neushoorn is van keratine — hetzelfde spul als je nagels.", cfg:{body:"#9aa0a4",belly:"#b8bdc2",ear:"#868c90",ears:"round",tail:"stub",tailTip:"#868c90",extras:["horn"],hornCol:"#e6ddc8",accent:"#5f6468"}},
+  gnoe:{naam:"Gnoe", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"savanne", weetje:"Elk jaar trekken meer dan een miljoen gnoes samen door de savanne — de grootste dieren-optocht op aarde.", cfg:{body:"#6b6560",belly:"#847d76",ear:"#57524d",ears:"up",tail:"long",extras:["antlers","forelock","liontuft"],hornCol:"#2f2b26",maneCol:"#2f2b26",crestCol:"#2f2b26",accent:"#3f3a35"}},
+  kikker:{naam:"Kikker", rarity:"gewoon", prijs:200, viaEi:true, prefZone:"moeras", weetje:"Een kikker knippert met z'n ogen om te slikken — z'n oogbollen duwen 't eten naar binnen.", cfg:{body:"#6cae53",belly:"#cbe4a8",ear:"#5c9a45",ears:"round",extras:["spots"],accent:"#3f6f30",nose:"#3f6f30"}},
+  reiger:{naam:"Reiger", rarity:"zeldzaam", prijs:700, viaEi:true, prefZone:"moeras", weetje:"Een reiger staat doodstil op één poot en wacht geduldig op een visje — de meester van 't geduld.", cfg:{plan:"bird",body:"#8fa3b0",belly:"#dbe4ea",beakCol:"#e6c34a",legCol:"#c9b98a",extras:["longneck","crest"],crestCol:"#39454f",accent:"#5a6b78"}},
+  krokodil:{naam:"Krokodil", rarity:"zeldzaam", prijs:880, viaEi:true, prefZone:"moeras", weetje:"Krokodillen bestaan al zo'n 200 miljoen jaar — ze zagen de dinosauriërs komen én gaan.", cfg:{body:"#6f8f57",belly:"#c2cd93",ear:"#5c7a48",ears:"tiny",tail:"long",extras:["longbody","spike"],spikeCol:"#4d6b3a",accent:"#3f5a2e"}},
+  salamander:{naam:"Salamander", rarity:"gewoon", prijs:210, viaEi:true, prefZone:"moeras", weetje:"Een salamander laat een afgebeten poot gewoon weer aangroeien.", cfg:{body:"#e0902f",belly:"#f2c98a",ear:"#c67a1e",ears:"tiny",tail:"long",extras:["longbody","spots"],accent:"#3a2410"}},
+  sneeuwhaas:{naam:"Sneeuwhaas", rarity:"gewoon", prijs:230, viaEi:true, prefZone:"poolgebied", weetje:"De sneeuwhaas wisselt van kleur: bruin in de zomer, sneeuwwit in de winter.", cfg:{body:"#eef2f5",belly:"#ffffff",ear:"#dbe4ea",ears:"bunny",tail:"stub",tailTip:"#ffffff",nose:"#c98ba0",accent:"#9fb0c0"}},
+  zeeleeuw:{naam:"Zeeleeuw", rarity:"zeldzaam", prijs:760, viaEi:true, prefZone:"poolgebied", weetje:"Zeeleeuwen herkennen elkaar aan hun stem — en kunnen op commando klappen en balanceren.", cfg:{plan:"seal",body:"#8a6f52",belly:"#c4a97f",nose:"#3a2c1e"}}
 };
 const ANIMAL_IDS = Object.keys(ANIMALS);
 const RARITY_ORDER = {gewoon:0, zeldzaam:1, legendarisch:2, special:3, event:4};
@@ -2457,11 +2467,18 @@ const MILESTONES = [
   {id:"ms_first_session", soort:null, badge:"first_session", icon:"🌟", naam:"Eerste sessie", check:()=>S.sessions.length>=1},
   {id:"ms_10_sessions", soort:null, badge:"tien_sessies", icon:"🔟", naam:"10 sessies", check:()=>S.sessions.length>=10},
   {id:"ms_first_5k", soort:"otter", icon:"🏅", naam:"Eerste 6 km", check:()=>longestRun()>=6, story:"Je liep je eerste 6 kilometer! Otter komt meezwemmen in je zoo. 🦦"},
+  {id:"ms_run_8k", soort:"panter", icon:"🐆", naam:"Eerste 8 km", check:()=>longestRun()>=8, story:"Je liep 8 kilometer aan één stuk — de sierlijke panter sluit zich bij je aan. 🐆"},
+  {id:"ms_run_10k", soort:"panda", icon:"🐼", naam:"Eerste 10 km", check:()=>longestRun()>=10, story:"Je liep 10 kilometer aan één stuk — en Panda, een van je lievelingen, komt trots in je zoo wonen! 🐼"},
+  {id:"ms_run_15k", soort:"pegasus", icon:"🪽", naam:"15 km hardlopen", check:()=>longestRun()>=15, story:"15 kilometer! De legendarische Pegasus spreidt z'n vleugels voor je. 🪽"},
+  {id:"ms_half_marathon", soort:"feniks", icon:"🔥", naam:"Halve marathon (21 km)", check:()=>longestRun()>=21, story:"Een halve marathon — 21 kilometer! De feniks herrijst voor deze heldendaad. 🔥"},
   {id:"ms_10k_total", soort:null, badge:"tien_km", icon:"🏃‍♀️", naam:"10 km totaal", check:()=>sum(runHistory(),s=>s.km)>=10},
-  {id:"ms_hipthrust_80", soort:"leeuw", icon:"🦁", naam:"Hip thrust 40 kg", check:()=>gymSessionsWith("hip_thrust").some(s=>(s.oefeningen||[]).some(o=>o.exId==="hip_thrust"&&(o.sets||[]).some(st=>num(st.kg)>=40&&num(st.reps)>=6))), story:"Je hip thrust ging naar 40 kg voor reps — dik 2,5× je startgewicht! De leeuw brult trots. 🦁"},
+  {id:"ms_hipthrust_80", soort:"leeuw", icon:"🦁", naam:"Hip thrust 6×25 kg", check:()=>gymSessionsWith("hip_thrust").some(s=>(s.oefeningen||[]).some(o=>o.exId==="hip_thrust"&&(o.sets||[]).some(st=>num(st.kg)>=25&&num(st.reps)>=6))), story:"Je drukte de hip thrust naar 6 × 25 kg! De leeuw brult mee. 🦁"},
   {id:"ms_goal_weight", soort:"eenhoorn", icon:"🦄", naam:"Streefgewicht in zicht", check:()=>{const p=weightProgressPct(); return p!=null && p>=90;}, story:"Je bent vlak bij je streefgewicht — de legendarische eenhoorn arriveert! ✨"},
-  {id:"ms_full_week", soort:"panda", badge:"volle_week", icon:"💯", naam:"Volle week (5/5)", check:()=>weekDoneCount()>=5, story:"Eerste volle week van 5! Panda komt je herstel bewaken. 🐼"},
-  {id:"ms_streak_14", soort:"draak", icon:"🐉", naam:"14 dagen reeks", check:()=>S.game.streakDagen>=14, story:"14 dagen op rij — een legendarische reeks! De draak is van jou. 🐉"}
+  {id:"ms_full_week", soort:"rodepanda", badge:"volle_week", icon:"💯", naam:"Volle week (5/5)", check:()=>weekDoneCount()>=5, story:"Eerste volle week van 5! De rode panda komt gezellig in je zoo wonen. 🐼"},
+  {id:"ms_streak_14", soort:"draak", icon:"🐉", naam:"14 dagen reeks", check:()=>S.game.streakDagen>=14, story:"14 dagen op rij — een legendarische reeks! De draak is van jou. 🐉"},
+  {id:"ms_streak_30", soort:"kitsune", icon:"🦊", naam:"30 dagen op rij", check:()=>S.game.streakDagen>=30, story:"30 dagen op rij — de mystieke Kitsune buigt voor jouw discipline. 🦊"},
+  {id:"ms_30_sessions", soort:"giraf", icon:"🦒", naam:"30 trainingen", check:()=>S.sessions.length>=30, story:"30 trainingen gelogd — de giraf steekt met kop en schouders boven alles uit. 🦒"},
+  {id:"ms_50_sessions", soort:"pauw", icon:"🦚", naam:"50 trainingen", check:()=>S.sessions.length>=50, story:"50 trainingen! Pronk gerust — de pauw komt met je meepronken. 🦚"}
 ];
 const BADGES = {
   first_session:{icon:"🌟",naam:"Eerste sessie"}, tien_sessies:{icon:"🔟",naam:"10 sessies"}, tien_km:{icon:"🏃‍♀️",naam:"10 km gelopen"},
@@ -2475,11 +2492,12 @@ const BADGES = {
    ============================================================ */
 function owns(soort){ return S.game.dieren.some(d=>d.soort===soort); }
 function discovered(soort){ return S.game.album.includes(soort); }
+function habitatFor(soort){ const pz=ANIMALS[soort]&&ANIMALS[soort].prefZone; return (pz && (S.game.zones||[]).includes(pz)) ? pz : "home"; }   // dier hoort alleen in z'n eigen verblijf (of Grasveldje tot dat verblijf vrij is)
 function addAnimal(soort, opts){
   opts=opts||{};
   const sp=ANIMALS[soort]; if(!sp) return null;
   const inst={ id:uid("a_"), soort, naam: opts.naam||sp.naam, groei: opts.groei!=null?opts.groei:(owns(soort)?1:0.4),
-    blijheid:100, voer:0, sport: opts.sport || SPORT_GROUPS[Math.floor(Math.random()*SPORT_GROUPS.length)], zone: opts.zone || (ANIMALS[soort].prefZone && (S.game.zones||[]).includes(ANIMALS[soort].prefZone) ? ANIMALS[soort].prefZone : (S.game.activeZone||"home")), x: opts.x!=null?opts.x:(15+Math.random()*70), y:0, skin:"normaal", verkregen:todayISO() };
+    blijheid:100, voer:0, sport: opts.sport || SPORT_GROUPS[Math.floor(Math.random()*SPORT_GROUPS.length)], zone: opts.zone || habitatFor(soort), x: opts.x!=null?opts.x:(15+Math.random()*70), y:0, skin:"normaal", verkregen:todayISO() };
   S.game.dieren.push(inst);
   if(!discovered(soort)){ S.game.album.push(soort); if(sp.rarity==="legendarisch") grantBadge("eerste_legendarisch"); }
   if(S.game.dieren.length>=5) grantBadge("vijf_dieren");
@@ -2876,7 +2894,7 @@ function addStepsManually(){
 }
 
 /* ---- eieren met pity ---- */
-function eggPool(){ return ANIMAL_IDS.filter(id=>ANIMALS[id].viaEi); }
+function eggPool(){ return ANIMAL_IDS.filter(id=>ANIMALS[id].viaEi && zoneReady(id)); }   // alleen dieren waarvan het verblijf al vrijgespeeld is
 function pickByRarity(pool, rarity){
   const c=pool.filter(id=>ANIMALS[id].rarity===rarity);
   if(!c.length) return pool[(Math.random()*pool.length)|0];
@@ -3640,6 +3658,9 @@ function proteinSection(){
    ZOO — render & interactie
    ============================================================ */
 let ZOO_EDIT=false;
+let zooPage=0; const ZOO_PER_PAGE=5;   // dieren per zoo-scherm (paginering per verblijf)
+let zooOrder=[], zooOrderZone=null;    // geschudde volgorde per bezoek — dieren "lopen vrij rond"
+function zooShuffle(){ const ids=zoneAnimals(S.game.activeZone).map(a=>a.id); for(let i=ids.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=ids[i]; ids[i]=ids[j]; ids[j]=t; } zooOrder=ids; zooOrderZone=S.game.activeZone; zooPage=0; }
 function nightState(){
   const f = S.game ? S.game.zooNachtForce : null;
   if(f===true) return { night:true, dusk:false };     // handmatig op nacht
@@ -3906,7 +3927,13 @@ function renderZoo(){
   // decoraties
   const decoHtml = zoneDecos(g.activeZone).map(d=>`<div class="zoo-deco" data-drag data-kind="deco" data-id="${d.id}" style="left:${d.x}%;bottom:${d.y}px;font-size:30px;z-index:1;cursor:${ZOO_EDIT?'grab':'default'}">${DECOS[d.soort]?DECOS[d.soort].emoji:"⭐"}${ZOO_EDIT?`<span onclick="delDeco('${d.id}');event.stopPropagation()" style="position:absolute;top:-8px;right:-8px;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:11px;display:flex;align-items:center;justify-content:center">✕</span>`:""}</div>`).join("");
   // dieren
-  const critterHtml = zoneAnimals(g.activeZone).map(d=>{
+  const _zaRaw = zoneAnimals(g.activeZone);
+  if(zooOrderZone!==g.activeZone || !zooOrder.length) zooShuffle();   // veiligheid: eerste render / andere zone
+  const _pos={}; zooOrder.forEach((id,i)=>_pos[id]=i);
+  const _zaAll = _zaRaw.slice().sort((a,b)=>((_pos[a.id]!=null?_pos[a.id]:1e9)-(_pos[b.id]!=null?_pos[b.id]:1e9)));
+  const zooPages = Math.max(1, Math.ceil(_zaAll.length/ZOO_PER_PAGE));
+  zooPage = clamp(zooPage, 0, zooPages-1);
+  const critterHtml = _zaAll.slice(zooPage*ZOO_PER_PAGE, (zooPage+1)*ZOO_PER_PAGE).map(d=>{
     const stg=animalStage(d), size= stg==="baby"?58:stg==="jong"?70:82;
     const plan=(ANIMALS[d.soort].cfg||{}).plan||"quad";
     const fly=plan==="butterfly", swim=plan==="fish";
@@ -3953,7 +3980,8 @@ function renderZoo(){
         <div class="hud-pill" onclick="toggleZooNight()" style="cursor:pointer" title="Tik om te wisselen: dag · nacht · automatisch">${ns.night?"🌙 Nacht":ns.dusk?"🌆 Schemer":"☀️ Dag"}${g.zooNachtForce!=null?" 📌":""}</div>
         <div class="hud-pill" onclick="openEggModal()" style="cursor:pointer">🥚 ${g.eieren||0}</div>
       </div>
-      ${critterHtml.trim()===""?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);font-weight:600;text-align:center;padding:20px">Dit verblijf is nog leeg.<br>Koop een dier of broed een ei uit! 🐣</div>`:""}
+      ${zooPages>1?`<div class="zoo-pager" style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.34);backdrop-filter:blur(4px);border-radius:999px;padding:5px 10px;z-index:5"><button onclick="zooPageNav(-1)" ${zooPage<=0?'disabled':''} style="font:inherit;background:none;border:none;color:#fff;font-size:19px;line-height:1;cursor:pointer;opacity:${zooPage<=0?'.35':'1'}">‹</button><span style="color:#fff;font-size:12px;font-weight:700">Scherm ${zooPage+1}/${zooPages}</span><button onclick="zooPageNav(1)" ${zooPage>=zooPages-1?'disabled':''} style="font:inherit;background:none;border:none;color:#fff;font-size:19px;line-height:1;cursor:pointer;opacity:${zooPage>=zooPages-1?'.35':'1'}">›</button></div>`:""}
+      ${_zaAll.length===0?`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);font-weight:600;text-align:center;padding:20px">Dit verblijf is nog leeg.<br>Koop een dier of broed een ei uit! 🐣</div>`:""}
     </div>
 
     <div class="signal" style="margin-top:12px"><span class="si">🐶</span><div><b>Stekkie zegt:</b> ${stekkieLine()}</div></div>
@@ -3983,11 +4011,12 @@ function nextUnlockHint(){
   const g=S.game;
   const next=MILESTONES.find(ms=>!S.milestonesHit.includes(ms.id) && ms.soort);
   if(next) return `${next.naam} → ontgrendelt ${ANIMALS[next.soort]?ANIMALS[next.soort].naam:"een dier"} ${next.icon}`;
-  const cheapest=ANIMAL_IDS.filter(id=>!owns(id)&&koopbaar(id)&&ANIMALS[id].prijs>0).sort((a,b)=>ANIMALS[a].prijs-ANIMALS[b].prijs)[0];
+  const cheapest=ANIMAL_IDS.filter(id=>!owns(id)&&koopbaar(id)&&zoneReady(id)&&ANIMALS[id].prijs>0).sort((a,b)=>ANIMALS[a].prijs-ANIMALS[b].prijs)[0];
   if(cheapest) return `Spaar voor ${ANIMALS[cheapest].naam} (${ANIMALS[cheapest].prijs} 🐾)`;
   return null;
 }
-function setZone(z){ S.game.activeZone=z; save(); renderZoo(); }
+function setZone(z){ S.game.activeZone=z; zooShuffle(); save(); renderZoo(); }
+function zooPageNav(dir){ zooPage+=dir; renderZoo(); }   // renderZoo clampt zooPage binnen bereik
 function toggleZooEdit(){ ZOO_EDIT=!ZOO_EDIT; renderZoo(); }
 function toggleZooNight(){
   const f=S.game.zooNachtForce;
@@ -4107,7 +4136,7 @@ function openShop(tab){
   let body="";
   if(tab==="dieren"){
     const order=ANIMAL_IDS.filter(koopbaar)
-      .sort((a,b)=>RARITY_ORDER[ANIMALS[a].rarity]-RARITY_ORDER[ANIMALS[b].rarity] || ANIMALS[a].prijs-ANIMALS[b].prijs);
+      .sort((a,b)=>(zoneReady(b)-zoneReady(a)) || RARITY_ORDER[ANIMALS[a].rarity]-RARITY_ORDER[ANIMALS[b].rarity] || ANIMALS[a].prijs-ANIMALS[b].prijs);
     body=`<div class="shopgrid">${order.map(id=>shopAnimalCard(id)).join("")}</div>`;
   } else if(tab==="zones"){
     body=`<div class="shopgrid">${Object.keys(ZONES).map(z=>shopZoneCard(z)).join("")}</div>`;
@@ -4141,14 +4170,16 @@ function buyFacility(k){
   celebrate(`${f.naam} gebouwd! ${f.glyph}`, 80);
 }
 function shopAnimalCard(id){
-  const a=ANIMALS[id], have=owns(id), can=S.game.pootjes>=a.prijs;
+  const a=ANIMALS[id], have=owns(id), ready=zoneReady(id), can=S.game.pootjes>=a.prijs, locked=!have&&!ready;
   const perk = a.perk?`<div class="chip pink" style="margin-top:2px">⭐ ${a.perk.label}</div>`:"";
-  return `<div class="shopcard ${have?'owned':''}">
+  const btn = have ? `<div class="ownedtag">✓ in bezit</div>`
+    : locked ? `<button class="btn sm ghost" disabled><span class="price">🔒 ${ZONES[a.prefZone]?ZONES[a.prefZone].naam:"verblijf"}</span></button>`
+    : `<button class="btn sm ${can?'':'ghost'}" ${can?"":"disabled"} onclick="buyAnimal('${id}')"><span class="price">${fmt(a.prijs)} 🐾</span></button>`;
+  return `<div class="shopcard ${have?'owned':''}${locked?' locked':''}">
     <span class="rar rar-${a.rarity}">${RARITY_LABEL[a.rarity]}</span>
-    <div class="svgwrap">${creatureSVG(a.cfg,{stage:"volwassen"})}</div>
-    <div class="sc-naam">${a.naam}</div>${perk}
-    ${have?`<div class="ownedtag">✓ in bezit</div>`
-      :`<button class="btn sm ${can?'':'ghost'}" ${can?"":"disabled"} onclick="buyAnimal('${id}')"><span class="price">${fmt(a.prijs)} 🐾</span></button>`}
+    <div class="svgwrap"${locked?' style="filter:brightness(.14) saturate(.12) opacity(.85)"':''}>${creatureSVG(a.cfg,{stage:"volwassen"})}</div>
+    <div class="sc-naam"${locked?' style="opacity:.45"':''}>${a.naam}</div>${perk}
+    ${btn}
   </div>`;
 }
 function shopZoneCard(z){
@@ -4169,9 +4200,11 @@ function shopDecoCard(k){
 }
 const MILESTONE_SOORTEN = new Set(MILESTONES.filter(m=>m.soort).map(m=>m.soort));
 function koopbaar(id){ const a=ANIMALS[id]; if(!a||a.gratis) return false; if(a.rarity==="legendarisch") return false; if(MILESTONE_SOORTEN.has(id)) return false; return a.rarity!=="event" || isEventActive(id); }
+function zoneReady(id){ const pz=ANIMALS[id]&&ANIMALS[id].prefZone; return !pz || (S.game.zones||[]).includes(pz); }   // dier koopbaar zodra z'n verblijf vrijgespeeld is
 function buyAnimal(id){
   const a=ANIMALS[id]; if(owns(id)){ toast("🐾","Dit dier heb je al!"); return; }
   if(!koopbaar(id)){ toast("🥚","Dit dier kun je niet kopen — verdien 'm of broed 'm uit!"); return; }
+  if(!zoneReady(id)){ const zn=ZONES[a.prefZone]?ZONES[a.prefZone].naam:"verblijf"; toast("🔒","Speel eerst het verblijf "+zn+" vrij — dan kun je dit dier kopen. 🐾"); return; }
   if(S.game.pootjes<a.prijs){ toast("🐾","Nog niet genoeg Pootjes — train ze bij elkaar! 💪"); return; }
   S.game.pootjes-=a.prijs; addAnimal(id,{groei:1}); computeZooLevel(); save();
   closeModal(); renderZoo();
@@ -4180,7 +4213,9 @@ function buyAnimal(id){
 function buyZone(z){
   const zo=ZONES[z]; if(S.game.zones.includes(z)) return;
   if(S.game.pootjes<zo.prijs){ toast("🐾","Nog niet genoeg Pootjes voor deze zone."); return; }
-  S.game.pootjes-=zo.prijs; S.game.zones.push(z); S.game.activeZone=z; grantBadge("zone_gekocht"); computeZooLevel(); save();
+  S.game.pootjes-=zo.prijs; S.game.zones.push(z); S.game.activeZone=z;
+  (S.game.dieren||[]).forEach(d=>{ d.zone=habitatFor(d.soort); });   // dieren van dit nieuwe verblijf verhuizen automatisch mee vanuit Grasveldje
+  grantBadge("zone_gekocht"); computeZooLevel(); save();
   closeModal(); renderZoo(); celebrate(`Nieuwe zone: ${zo.naam}! ${zo.icon}`, 120);
 }
 function buyDeco(k){
@@ -4293,7 +4328,7 @@ function openAnimalDetail(id){
     <div class="signal" style="margin:0 0 12px"><span class="si">💡</span><div><b>Leuk weetje:</b> ${esc(a.weetje)}</div></div>
     ${a.perk?`<div class="chip pink" style="margin-bottom:12px">⭐ ${a.perk.label}</div>`:""}
     <div class="frow c2">
-      <div class="field"><label>Verblijf</label><select id="an_zone">${S.game.zones.map(z=>`<option value="${z}" ${d.zone===z?'selected':''}>${ZONES[z].naam}</option>`).join("")}</select></div>
+      <div class="field"><label>Verblijf</label><div style="padding:9px 11px;color:var(--dim);font-size:13px;border:1px solid var(--line);border-radius:10px">${ZONES[d.zone]?ZONES[d.zone].icon+" "+ZONES[d.zone].naam:"🌿 Grasveldje"} <span style="color:var(--mut)">· vast 🏡</span></div></div>
       <div class="field"><label>Kleur</label><select id="an_skin"><option value="normaal" ${d.skin!=='roze'?'selected':''}>Normaal</option><option value="roze" ${d.skin==='roze'?'selected':''}>Roze 💗</option></select></div>
     </div>
     <div class="factions" style="margin-top:6px">
@@ -4304,7 +4339,7 @@ function openAnimalDetail(id){
 }
 function saveAnimal(id){
   const d=S.game.dieren.find(x=>x.id===id); if(!d) return;
-  d.naam=el("an_naam").value.trim()||ANIMALS[d.soort].naam; d.zone=el("an_zone").value; d.skin=el("an_skin").value;
+  d.naam=el("an_naam").value.trim()||ANIMALS[d.soort].naam; d.skin=el("an_skin").value;
   save(); closeModal(); renderZoo(); toast("💾","Opgeslagen!");
 }
 function releaseAnimal(id){
@@ -4328,11 +4363,25 @@ function openQuestsModal(){
 }
 /* ---- prestaties / badges ---- */
 function openBadges(){
-  const owned=S.game.badges||[];
+  const owned=S.game.badges||[], hit=S.milestonesHit||[];
+  const msA=MILESTONES.filter(m=>m.soort && ANIMALS[m.soort]);
+  const done=msA.filter(m=>hit.includes(m.id)).length;
+  const msHtml=msA.map(m=>{ const a=ANIMALS[m.soort], earned=hit.includes(m.id);
+    const tag=a.rarity==="legendarisch"?" 👑":a.rarity==="special"?" ⭐":"";
+    return `<div style="display:flex;align-items:center;gap:11px;background:var(--bg-soft);border:1px solid ${earned?"rgba(58,217,179,.4)":"var(--line)"};border-radius:12px;padding:9px 11px;margin-bottom:7px">
+      <div style="width:46px;height:38px;flex-shrink:0${earned?"":";filter:brightness(.3) saturate(.25)"}">${creatureMiniIcon(a.cfg)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13.5px;font-weight:700${earned?"":";color:var(--dim)"}">${earned?"✓ ":""}${esc(a.naam)}${tag}</div>
+        <div style="font-size:11.5px;color:var(--mut)">${earned?"Behaald! 🎉":"Doel: "+esc(m.naam)}</div>
+      </div>
+    </div>`; }).join("");
   openModal(`<button class="x" aria-label="Sluiten" onclick="closeModal()">✕</button>
-    <h2>🏅 Prestaties-muur</h2><div class="msub">${owned.length}/${Object.keys(BADGES).length} badges behaald.</div>
+    <h2>🏅 Prestaties-muur</h2><div class="msub">${owned.length}/${Object.keys(BADGES).length} badges · ${done}/${msA.length} mijlpaal-dieren behaald.</div>
+    <div class="msub" style="margin:12px 0 8px;font-weight:700;color:var(--text)">🎖️ Badges</div>
     <div class="badge-grid">${Object.keys(BADGES).map(k=>{ const has=owned.includes(k);
-      return `<div class="badge ${has?'has':'no'}"><div class="bch">${BADGES[k].icon}</div>${BADGES[k].naam}</div>`; }).join("")}</div>`);
+      return `<div class="badge ${has?'has':'no'}"><div class="bch">${BADGES[k].icon}</div>${BADGES[k].naam}</div>`; }).join("")}</div>
+    <div class="msub" style="margin:16px 0 8px;font-weight:700;color:var(--text)">🏆 Mijlpaal-dieren — verdien ze met sporten</div>
+    ${msHtml}`);
 }
 /* ---- mijlpaal-moment ---- */
 function openMilestoneModal(ms){
@@ -4667,7 +4716,7 @@ function sanitizeZones(){
   const g=S.game;
   g.zones=(g.zones||["home"]).filter(z=>ZONES[z]);
   if(!g.zones.includes("home")) g.zones.unshift("home");
-  (g.dieren||[]).forEach(d=>{ if(!ZONES[d.zone]) d.zone="home"; });
+  (g.dieren||[]).forEach(d=>{ d.zone=habitatFor(d.soort); });   // elk dier hoort dwingend in z'n eigen verblijf (of Grasveldje tot dat vrij is)
   (g.faciliteiten||[]).forEach(f=>{ if(!ZONES[f.zone]) f.zone="home"; });
   (g.decoraties||[]).forEach(d=>{ if(!ZONES[d.zone]) d.zone="home"; });
   if(!ZONES[g.activeZone]) g.activeZone="home";
