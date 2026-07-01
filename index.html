@@ -1461,7 +1461,7 @@ function gymRemoveSet(ei,si){
     ex.sets.splice(si,1);
     const tdef=getTemplates()[LOGGER.templateId].oef.find(o=>o.exId===ex.exId);
     const rec=tdef?tdef.sets:0;
-    if(rec && ex.sets.length<rec) toast("💪",`Voor het mooiste resultaat zijn ${rec} sets ideaal voor je ${ex.naam.toLowerCase()} — maar jij kent je lijf het best, minder mag altijd. ❤️`, null, 3500);
+    if(rec && ex.sets.length<rec) toast("💪",`Voor het mooiste resultaat zijn ${rec} sets ideaal voor je ${ex.naam.toLowerCase()} — maar jij kent je lijf het best, minder mag altijd. ❤️`, null, 4000);
   }
   renderGymLogger(getTemplates()[LOGGER.templateId].naam);
 }
@@ -1512,7 +1512,7 @@ function saveGymSession(){
   const planned=(getTemplates()[L.templateId].oef||[]).filter(o=>!o.optioneel);
   const doneIds=new Set(oef.map(o=>o.exId));
   const skipped=planned.filter(o=>!doneIds.has(o.exId)).length;
-  if(skipped>0) setTimeout(()=>toast("💪",`Je sloeg ${skipped} ${plural(skipped,"oefening","oefeningen")} over — voor het mooiste resultaat doe je ze allemaal. Maar top dat je er was! ❤️`, null, 3500),700);
+  if(skipped>0) setTimeout(()=>toast("💪",`Je sloeg ${skipped} ${plural(skipped,"oefening","oefeningen")} over — voor het mooiste resultaat doe je ze allemaal. Maar top dat je er was! ❤️`, null, 4000),700);
   closeModal();
 }
 
